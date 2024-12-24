@@ -1,6 +1,6 @@
 # Estoken: Real Estate Tokenization Platform
 
-![Estoken Logo](/placeholder.svg?height=200&width=200)
+<!-- ![Estoken Logo](/placeholder.svg?height=200&width=200) -->
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -18,7 +18,7 @@
 
 Estoken is a revolutionary real estate tokenization platform built on the CrossFI blockchain. Our mission is to democratize property investment by enabling fractional ownership through blockchain technology. This platform allows middle-income investors, real estate enthusiasts, and developers to participate in property markets without requiring significant capital.
 
-![Real Estate Tokenization Concept](/placeholder.svg?height=400&width=600)
+<!-- ![Real Estate Tokenization Concept](/placeholder.svg?height=400&width=600) -->
 
 ### Key Concepts
 
@@ -57,7 +57,7 @@ Estoken is a revolutionary real estate tokenization platform built on the CrossF
 - Enable direct trading of property tokens between users.
 - Implement secure smart contracts for ownership transfers.
 
-![Tokenization Process](/placeholder.svg?height=300&width=500)
+<!-- ![Tokenization Process](/placeholder.svg?height=300&width=500) -->
 
 ### 2. Rental Income Distribution
 
@@ -89,7 +89,7 @@ Estoken is a revolutionary real estate tokenization platform built on the CrossF
 - Provide a comprehensive dashboard for managing token holdings and tracking investments.
 - Include filters, charts, and detailed summaries of user portfolios.
 
-![User Dashboard Mockup](/placeholder.svg?height=400&width=700)
+<!-- ![User Dashboard Mockup](/placeholder.svg?height=400&width=700) -->
 
 ### 5. Secondary Market Integration
 
