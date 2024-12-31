@@ -24,13 +24,17 @@ export function Navbar() {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
-          <motion.a 
-            href="/" 
-            className="text-2xl font-bold text-white"
+          <motion.a
+            href="/"
+            className="flex items-center"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            Estoken
+            <img
+              src="/Logo.png" 
+              alt="Estoken Logo"
+              className="h-10 w-auto"
+            />
           </motion.a>
           
           <div className="hidden md:flex items-center space-x-8">
@@ -38,7 +42,7 @@ export function Navbar() {
               <motion.a
                 key={item}
                 href={`#${item.toLowerCase().replace(/\s+/g, '-')}`}
-                className="text-white hover:text-blue-400 transition-colors"
+                className="text-white hover:text-blue-400 transition-colors font-semibold"
                 whileHover={{ y: -2 }}
                 whileTap={{ y: 0 }}
               >
@@ -93,4 +97,3 @@ export function Navbar() {
     </motion.nav>
   )
 }
-
