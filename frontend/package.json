@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^5.1.0",
     "autoprefixer": "^10.4.20",
     "framer-motion": "^11.15.0",
     "postcss": "^8.4.49",

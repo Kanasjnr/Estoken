@@ -1,60 +1,61 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract RentalIncomeDispenser is Ownable, ReentrancyGuard {
+contract RentalIncomeDispenser {
     IERC1155 public propertyToken;
 
     struct RentalIncome {
         uint256 tokenId;
         uint256 totalAmount;
-        uint256 totalShares;
-        uint256 claimPeriod;
+        uint256 totalSupply;
+        uint256 claimedAmount;
+        uint256 lastDistributionTimestamp;
     }
 
     mapping(uint256 => RentalIncome) public rentalIncomes;
-    mapping(uint256 => mapping(address => bool)) public hasClaimed;
+    mapping(uint256 => mapping(address => uint256)) public claimedIncome;
 
-    event RentalIncomeAdded(uint256 indexed tokenId, uint256 amount, uint256 claimPeriod);
-    event RentalIncomeClaimed(uint256 indexed tokenId, address indexed claimer, uint256 amount);
+    event RentalIncomeReceived(uint256 indexed tokenId, uint256 amount);
+    event IncomeClaimed(uint256 indexed tokenId, address indexed account, uint256 amount);
 
-    constructor(address _propertyTokenAddress, address initialOwner) Ownable(initialOwner) {
-        propertyToken = IERC1155(_propertyTokenAddress);
+    constructor(address _propertyToken) {
+        propertyToken = IERC1155(_propertyToken);
     }
 
-    function addRentalIncome(uint256 _tokenId, uint256 _totalAmount, uint256 _totalShares) public onlyOwner {
-        require(_totalAmount > 0, "Amount must be greater than 0");
-        require(_totalShares > 0, "Total shares must be greater than 0");
+    function distributeRentalIncome(uint256 tokenId) external payable {
+        require(msg.value > 0, "Must send some ETH");
+        RentalIncome storage income = rentalIncomes[tokenId];
+        income.totalAmount += msg.value;
+        // income.totalSupply = propertyToken.totalSupply(tokenId);
+        income.lastDistributionTimestamp = block.timestamp;
 
-        uint256 claimPeriod = block.timestamp;
-        rentalIncomes[_tokenId] = RentalIncome({
-            tokenId: _tokenId,
-            totalAmount: _totalAmount,
-            totalShares: _totalShares,
-            claimPeriod: claimPeriod
-        });
-
-        emit RentalIncomeAdded(_tokenId, _totalAmount, claimPeriod);
+        emit RentalIncomeReceived(tokenId, msg.value);
     }
 
-    function claimRentalIncome(uint256 _tokenId) public nonReentrant {
-        RentalIncome storage income = rentalIncomes[_tokenId];
-        require(income.totalAmount > 0, "No rental income available");
-        require(!hasClaimed[_tokenId][msg.sender], "Already claimed for this period");
+    function claimIncome(uint256 tokenId) external {
+        RentalIncome storage income = rentalIncomes[tokenId];
+        require(income.totalAmount > 0, "No income to claim");
 
-        uint256 userShares = propertyToken.balanceOf(msg.sender, _tokenId);
-        require(userShares > 0, "No shares owned");
+        uint256 balance = propertyToken.balanceOf(msg.sender, tokenId);
+        require(balance > 0, "Must own tokens to claim income");
 
-        uint256 userAmount = (income.totalAmount * userShares) / income.totalShares;
-        hasClaimed[_tokenId][msg.sender] = true;
+        uint256 totalUnclaimed = (income.totalAmount * balance / income.totalSupply) - claimedIncome[tokenId][msg.sender];
+        require(totalUnclaimed > 0, "No unclaimed income");
 
-        payable(msg.sender).transfer(userAmount);
+        claimedIncome[tokenId][msg.sender] += totalUnclaimed;
+        income.claimedAmount += totalUnclaimed;
 
-        emit RentalIncomeClaimed(_tokenId, msg.sender, userAmount);
+        payable(msg.sender).transfer(totalUnclaimed);
+
+        emit IncomeClaimed(tokenId, msg.sender, totalUnclaimed);
     }
 
-    receive() external payable {}
+    function getUnclaimedIncome(uint256 tokenId, address account) public view returns (uint256) {
+        RentalIncome storage income = rentalIncomes[tokenId];
+        uint256 balance = propertyToken.balanceOf(account, tokenId);
+        uint256 totalEarned = income.totalAmount * balance / income.totalSupply;
+        return totalEarned - claimedIncome[tokenId][account];
+    }
 }
