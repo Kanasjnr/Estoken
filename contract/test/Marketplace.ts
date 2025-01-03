@@ -60,13 +60,18 @@ describe("Marketplace", function () {
   });
 
   describe("Buying Tokens", function () {
-    it("Should allow buying tokens", async function () {
+    it("Should allow buying tokens and collect fees", async function () {
       const { marketplace, propertyToken, owner, addr1, addr2 } = await loadFixture(deployMarketplaceFixture);
       await propertyToken.mint(addr1.address, 100, "0x");
       await propertyToken.connect(addr1).setApprovalForAll(await marketplace.getAddress(), true);
       await marketplace.connect(addr1).createListing(1, 50, ethers.parseEther("1"));
-      await marketplace.connect(addr2).buyTokens(1, 25, { value: ethers.parseEther("25") });
+      
+      const initialBalance = await ethers.provider.getBalance(await marketplace.getAddress());
+      await marketplace.connect(addr2).buyTokens(1, 25, { value: ethers.parseEther("25.5") });
+      
       expect(await propertyToken.balanceOf(addr2.address, 1)).to.equal(25n);
+      const fee = ethers.parseEther("0.5"); // 2% of 25 ETH
+      expect(await ethers.provider.getBalance(await marketplace.getAddress())).to.equal(initialBalance + fee);
     });
 
     it("Should emit Sale event", async function () {
@@ -74,14 +79,26 @@ describe("Marketplace", function () {
       await propertyToken.mint(addr1.address, 100, "0x");
       await propertyToken.connect(addr1).setApprovalForAll(await marketplace.getAddress(), true);
       await marketplace.connect(addr1).createListing(1, 50, ethers.parseEther("1"));
-      await expect(marketplace.connect(addr2).buyTokens(1, 25, { value: ethers.parseEther("25") }))
+      
+      await expect(marketplace.connect(addr2).buyTokens(1, 25, { value: ethers.parseEther("25.5") }))
         .to.emit(marketplace, "Sale")
         .withArgs(1, addr2.address, 25);
     });
 
+    it("Should emit FeesCollected event", async function () {
+      const { marketplace, propertyToken, owner, addr1, addr2 } = await loadFixture(deployMarketplaceFixture);
+      await propertyToken.mint(addr1.address, 100, "0x");
+      await propertyToken.connect(addr1).setApprovalForAll(await marketplace.getAddress(), true);
+      await marketplace.connect(addr1).createListing(1, 50, ethers.parseEther("1"));
+      
+      await expect(marketplace.connect(addr2).buyTokens(1, 25, { value: ethers.parseEther("25.5") }))
+        .to.emit(marketplace, "FeesCollected")
+        .withArgs(ethers.parseEther("0.5"));
+    });
+
     it("Should revert if listing is not active", async function () {
       const { marketplace, propertyToken, owner, addr1, addr2 } = await loadFixture(deployMarketplaceFixture);
-      await expect(marketplace.connect(addr2).buyTokens(1, 25, { value: ethers.parseEther("25") }))
+      await expect(marketplace.connect(addr2).buyTokens(1, 25, { value: ethers.parseEther("25.5") }))
         .to.be.revertedWith("Listing is not active");
     });
 
@@ -90,7 +107,7 @@ describe("Marketplace", function () {
       await propertyToken.mint(addr1.address, 100, "0x");
       await propertyToken.connect(addr1).setApprovalForAll(await marketplace.getAddress(), true);
       await marketplace.connect(addr1).createListing(1, 50, ethers.parseEther("1"));
-      await expect(marketplace.connect(addr2).buyTokens(1, 100, { value: ethers.parseEther("100") }))
+      await expect(marketplace.connect(addr2).buyTokens(1, 100, { value: ethers.parseEther("102") }))
         .to.be.revertedWith("Not enough tokens available");
     });
 
@@ -142,6 +159,28 @@ describe("Marketplace", function () {
       await marketplace.connect(addr1).cancelListing(1);
       await expect(marketplace.connect(addr1).cancelListing(1))
         .to.be.revertedWith("Listing is not active");
+    });
+  });
+
+  describe("Withdrawing Fees", function () {
+    it("Should allow owner to withdraw fees", async function () {
+      const { marketplace, propertyToken, owner, addr1, addr2 } = await loadFixture(deployMarketplaceFixture);
+      await propertyToken.mint(addr1.address, 100, "0x");
+      await propertyToken.connect(addr1).setApprovalForAll(await marketplace.getAddress(), true);
+      await marketplace.connect(addr1).createListing(1, 50, ethers.parseEther("1"));
+      await marketplace.connect(addr2).buyTokens(1, 25, { value: ethers.parseEther("25.5") });
+
+      const initialOwnerBalance = await ethers.provider.getBalance(owner.address);
+      await marketplace.connect(owner).withdrawFees();
+      const finalOwnerBalance = await ethers.provider.getBalance(owner.address);
+
+      expect(finalOwnerBalance).to.be.gt(initialOwnerBalance);
+    });
+
+    it("Should revert if non-owner tries to withdraw fees", async function () {
+      const { marketplace, addr1 } = await loadFixture(deployMarketplaceFixture);
+      await expect(marketplace.connect(addr1).withdrawFees())
+        .to.be.revertedWithCustomError(marketplace, "OwnableUnauthorizedAccount");
     });
   });
 });

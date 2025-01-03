@@ -3,9 +3,12 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Marketplace is ERC1155Holder {
+contract Marketplace is ERC1155Holder, Ownable {
     IERC1155 public propertyToken;
+
+    uint256 public constant TRANSACTION_FEE_PERCENTAGE = 2;
 
     struct Listing {
         address seller;
@@ -21,8 +24,9 @@ contract Marketplace is ERC1155Holder {
     event Listed(uint256 indexed listingId, address indexed seller, uint256 tokenId, uint256 amount, uint256 pricePerToken);
     event Sale(uint256 indexed listingId, address indexed buyer, uint256 amount);
     event ListingCancelled(uint256 indexed listingId);
+    event FeesCollected(uint256 amount);
 
-    constructor(address _propertyToken) {
+    constructor(address _propertyToken) Ownable(msg.sender) {
         propertyToken = IERC1155(_propertyToken);
     }
 
@@ -42,9 +46,12 @@ contract Marketplace is ERC1155Holder {
         Listing storage listing = listings[listingId];
         require(listing.isActive, "Listing is not active");
         require(amount <= listing.amount, "Not enough tokens available");
-        require(msg.value >= amount * listing.pricePerToken, "Insufficient payment");
 
         uint256 totalPrice = amount * listing.pricePerToken;
+        uint256 fee = (totalPrice * TRANSACTION_FEE_PERCENTAGE) / 100;
+        uint256 totalCost = totalPrice + fee;
+        require(msg.value >= totalCost, "Insufficient payment");
+
         listing.amount -= amount;
         if (listing.amount == 0) {
             listing.isActive = false;
@@ -54,6 +61,7 @@ contract Marketplace is ERC1155Holder {
         payable(listing.seller).transfer(totalPrice);
 
         emit Sale(listingId, msg.sender, amount);
+        emit FeesCollected(fee);
     }
 
     function cancelListing(uint256 listingId) external {
@@ -66,4 +74,10 @@ contract Marketplace is ERC1155Holder {
 
         emit ListingCancelled(listingId);
     }
+
+    function withdrawFees() external onlyOwner {
+        uint256 balance = address(this).balance;
+        payable(owner()).transfer(balance);
+    }
 }
+
