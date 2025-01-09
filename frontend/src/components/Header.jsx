@@ -1,20 +1,21 @@
 import { Bell, User } from 'lucide-react'
+import { Button } from "@/components/ui/button"
 
-function Header() {
+export function Header() {
   return (
-    <header className="bg-gray-800 border-b border-gray-700 p-4 flex justify-between items-center">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+    <header className="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+      <div className="flex items-center">
+        
+      </div>
       <div className="flex items-center space-x-4">
-        <button className="p-2 rounded-full hover:bg-gray-700">
-          <Bell className="h-6 w-6" />
-        </button>
-        <button className="p-2 rounded-full hover:bg-gray-700">
-          <User className="h-6 w-6" />
-        </button>
+        <Button variant="ghost" size="icon">
+          <Bell className="h-5 w-5" />
+        </Button>
+        <Button variant="ghost" size="icon">
+          <User className="h-5 w-5" />
+        </Button>
       </div>
     </header>
   )
 }
-
-export default Header
 

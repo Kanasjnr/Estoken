@@ -1,4 +1,4 @@
-import  { useState } from 'react'
+import { useState } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import DashboardContent from './DashboardContent'
@@ -33,7 +33,7 @@ function Dashboard() {
       <Sidebar setActiveSection={setActiveSection} />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 bg-gray-900">
           {renderContent()}
         </main>
       </div>

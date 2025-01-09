@@ -1,48 +1,78 @@
 import React from 'react'
-import { useSidebar } from './SidebarProvider'
-import { Home, Building, Coins, BarChart2, ShoppingCart, Bell, Settings, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { LayoutDashboard, Building, Coins, BarChart2, ShoppingCart, Settings, Menu } from 'lucide-react'
 
 const menuItems = [
-  { icon: Home, label: 'Dashboard', section: 'dashboard' },
-  { icon: Building, label: 'Properties', section: 'properties' },
-  { icon: Coins, label: 'Tokenization', section: 'tokenization' },
-  { icon: BarChart2, label: 'Rental Income', section: 'rental' },
-  { icon: ShoppingCart, label: 'Marketplace', section: 'marketplace' },
-  { icon: Bell, label: 'Notifications', section: 'notifications' },
-  { icon: Settings, label: 'Settings', section: 'settings' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: Building, label: 'Properties', path: '/dashboard/properties' },
+  { icon: Coins, label: 'Tokenization', path: '/dashboard/tokenization' },
+  { icon: BarChart2, label: 'Rental Income', path: '/dashboard/rental' },
+  { icon: ShoppingCart, label: 'Marketplace', path: '/dashboard/marketplace' },
+  { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
 ]
 
-function Sidebar({ setActiveSection }) {
-  const { isSidebarOpen, setIsSidebarOpen } = useSidebar()
+export function Sidebar() {
+  const location = useLocation()
+  const [expanded, setExpanded] = React.useState(true)
 
   return (
-    <aside className={`bg-gray-800 text-white transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
-      <div className="flex items-center justify-between p-4">
-        <h2 className={`text-2xl font-bold transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
-          estoken
-        </h2>
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-full hover:bg-gray-700">
-          {isSidebarOpen ? <ChevronLeft /> : <ChevronRight />}
-        </button>
+    <aside
+      className={cn(
+        "bg-gray-800 text-white shadow-lg transition-all duration-300 ease-in-out",
+        expanded ? "w-80" : "w-24"
+      )}
+    >
+      <div className="flex items-center justify-between px-6 py-5 border-b border-gray-700">
+        <img
+          src="/Logo.png"
+          alt="Logo"
+          className={cn(
+            "h-12 transition-all duration-300",
+            expanded ? "opacity-100" : "opacity-100" 
+          )}
+        />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setExpanded(!expanded)}
+          className="text-gray-400 hover:text-white"
+        >
+          <Menu className="h-8 w-8" />
+        </Button>
       </div>
-      <nav className="mt-8">
-        {menuItems.map((item, index) => (
-          <a
-            key={index}
-            href="#"
-            onClick={() => setActiveSection(item.section)}
-            className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-200"
-          >
-            <item.icon className="h-6 w-6" />
-            <span className={`ml-4 transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
-              {item.label}
-            </span>
-          </a>
-        ))}
+
+   
+      <nav className="mt-6">
+        <ul className="space-y-2">
+          {menuItems.map((item, index) => (
+            <li key={index}>
+              <Link
+                to={item.path}
+                className={cn(
+                  "flex items-center px-6 py-4 text-lg font-semibold rounded-lg transition-all duration-200",
+                  location.pathname === item.path
+                    ? "bg-gray-700 text-blue-400"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                )}
+              >
+                <item.icon className="h-8 w-8" />
+                <span
+                  className={cn(
+                    "ml-6 transition-opacity duration-300",
+                    expanded ? "opacity-100" : "opacity-0"
+                  )}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
+
+      
     </aside>
   )
 }
-
-export default Sidebar
-
