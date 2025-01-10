@@ -1,20 +1,21 @@
-import { Navbar } from './components/Navbar'
-import { Hero } from './components/Hero'
-import { Features } from './components/Features'
-import { HowItWorks } from './components/HowItWorks'
-import { Benefits } from './components/Benefits'
-import { Footer } from './components/Footer'
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
+import { SidebarProvider } from './components/SidebarProvider'
+import DashboardPage from './pages/DashboardPage'
+import LandingPage from './pages/LandingPage'
 
-export default function App() {
+function App() {
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Navbar />
-      <Hero />
-      <Features />
-      <HowItWorks />
-      <Benefits />
-      <Footer />
-    </div>
+    <Router>
+      <SidebarProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/dashboard/*" element={<DashboardPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </SidebarProvider>
+    </Router>
   )
 }
+
+export default App
 

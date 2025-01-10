@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Button } from "./Button";
+import { ethers } from "ethers";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [walletAddress, setWalletAddress] = useState(null);
+
   const { scrollY } = useScroll();
   const backgroundColor = useTransform(
     scrollY,
@@ -16,6 +18,22 @@ export function Navbar() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const connectWallet = async () => {
+    if (typeof window.ethereum === "undefined") {
+      alert("MetaMask is not installed. Please install it to use this feature.");
+      return;
+    }
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum); // For ethers v6
+      const accounts = await provider.send("eth_requestAccounts", []);
+      setWalletAddress(accounts[0]); // Save the connected wallet address
+    } catch (error) {
+      console.error("Error connecting to wallet:", error);
+      alert("Failed to connect wallet. Please try again.");
+    }
+  };
 
   return (
     <motion.nav
@@ -45,15 +63,15 @@ export function Navbar() {
                 {item}
               </motion.a>
             ))}
-            {/* <Button variant="primary">Connect Wallet</Button> */}
             <motion.button
+              onClick={connectWallet}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="px-8 py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold 
                          hover:from-indigo-500 hover:to-purple-500 transition-all duration-300 
                          shadow-[0_0_20px_rgba(79,70,229,0.5)] hover:shadow-[0_0_25px_rgba(79,70,229,0.7)]"
             >
-              Connect Wallet{" "}
+              {walletAddress ? `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : "Connect Wallet"}
             </motion.button>
           </div>
 
@@ -72,7 +90,7 @@ export function Navbar() {
                 ) : (
                   <path
                     fillRule="evenodd"
-                    d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z"
+                    d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0-2H4a1 1 0 0 1 0-2z"
                   />
                 )}
               </svg>
@@ -81,7 +99,6 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
       <motion.div
         initial={false}
         animate={isOpen ? "open" : "closed"}
@@ -103,9 +120,12 @@ export function Navbar() {
               {item}
             </a>
           ))}
-          <Button variant="primary" fullWidth>
-            Connect Wallet
-          </Button>
+          <button
+            onClick={connectWallet}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-500 transition-colors"
+          >
+            {walletAddress ? `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : "Connect Wallet"}
+          </button>
         </div>
       </motion.div>
     </motion.nav>
