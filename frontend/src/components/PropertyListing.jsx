@@ -1,63 +1,70 @@
-import { useState, useEffect } from 'react';
-import { PropertyCard } from './PropertyCard';
+import { useState, useEffect } from "react";
+import { PropertyCard } from "./PropertyCard";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import useCreateProperty from '../hooks/useCreateProperty';
-import usePropertyDetails from '../hooks/usePropertyDetails';
-import useContract from '../hooks/useContract';
-import propertyRegistryABI from '../abis/PropertyRegistry.json';
+import useCreateProperty from "../hooks/useCreateProperty";
+import { useAppKitAccount } from "@reown/appkit/react";
+import propertyRegistryABI from "../abis/PropertyRegistry.json";
+import { ethers } from "ethers";
 
 export function PropertyListing() {
   const [properties, setProperties] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
-    location: '',
-    minPrice: '',
-    maxPrice: '',
-    minYield: '',
+    location: "",
+    minPrice: "",
+    maxPrice: "",
+    minYield: "",
   });
   const [newProperty, setNewProperty] = useState({
-    name: '',
-    location: '',
-    tokenId: '',
+    name: "",
+    location: "",
+    tokenId: "",
   });
 
-  // Correct usage of useCreateProperty
   const addProperty = useCreateProperty();
+  const { address } = useAppKitAccount();
 
-  const propertyRegistryContract = useContract(import.meta.env.VITE_PROPERTY_REGISTRY_ADDRESS, propertyRegistryABI);
+  const propertyRegistryContractAddress = import.meta.env.VITE_PROPERTY_REGISTRY_ADDRESS;
 
   useEffect(() => {
     const fetchProperties = async () => {
-      if (propertyRegistryContract) {
+      if (propertyRegistryContractAddress && address) {
         try {
-          const propertyCount = await propertyRegistryContract.propertyCount();
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          const contract = new ethers.Contract(
+            propertyRegistryContractAddress,
+            propertyRegistryABI,
+            provider
+          );
+
+          const propertyCount = await contract.propertyCount();
           const fetchedProperties = [];
           for (let i = 1; i <= propertyCount; i++) {
-            const propertyDetails = await propertyRegistryContract.getProperty(i);
+            const propertyDetails = await contract.getProperty(i);
             fetchedProperties.push({
               id: i,
               name: propertyDetails[0],
               location: propertyDetails[1],
               tokenId: propertyDetails[2].toString(),
               isActive: propertyDetails[3],
-              valuation: '$1,000,000',
-              tokenPrice: '$100',
-              rentalYield: '5%',
-              image: 'https://via.placeholder.com/300x200',
+              valuation: "$1,000,000",
+              tokenPrice: "$100",
+              rentalYield: "5%",
+              image: "https://via.placeholder.com/300x200",
             });
           }
           setProperties(fetchedProperties);
         } catch (error) {
-          console.error('Error fetching properties:', error);
+          console.error("Error fetching properties:", error);
         }
       }
     };
 
     fetchProperties();
-  }, [propertyRegistryContract]);
+  }, [propertyRegistryContractAddress, address]);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -79,40 +86,52 @@ export function PropertyListing() {
 
   const handleCreateProperty = async () => {
     try {
-      const receipt = await addProperty(newProperty.name, newProperty.location, newProperty.tokenId);
-      if (receipt) {
-        const propertyCount = await propertyRegistryContract.propertyCount();
-        const newPropertyDetails = await propertyRegistryContract.getProperty(propertyCount);
-        const newPropertyWithId = {
-          id: propertyCount,
-          name: newPropertyDetails[0],
-          location: newPropertyDetails[1],
-          tokenId: newPropertyDetails[2].toString(),
-          isActive: newPropertyDetails[3],
-          valuation: '$1,000,000',
-          tokenPrice: '$100',
-          rentalYield: '5%',
-          image: 'https://via.placeholder.com/300x200',
-        };
-        setProperties([...properties, newPropertyWithId]);
-        setNewProperty({
-          name: '',
-          location: '',
-          tokenId: '',
-        });
-      }
+      const { name, location, tokenId } = newProperty;
+      await addProperty(propertyRegistryContractAddress, name, location, tokenId);
+
+      // Fetch the newly created property
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const contract = new ethers.Contract(
+        propertyRegistryContractAddress,
+        propertyRegistryABI,
+        provider
+      );
+      const propertyCount = await contract.propertyCount();
+      const newPropertyDetails = await contract.getProperty(propertyCount);
+
+      const newPropertyWithId = {
+        id: propertyCount,
+        name: newPropertyDetails[0],
+        location: newPropertyDetails[1],
+        tokenId: newPropertyDetails[2].toString(),
+        isActive: newPropertyDetails[3],
+        valuation: "$1,000,000",
+        tokenPrice: "$100",
+        rentalYield: "5%",
+        image: "https://via.placeholder.com/300x200",
+      };
+
+      setProperties([...properties, newPropertyWithId]);
+      setNewProperty({
+        name: "",
+        location: "",
+        tokenId: "",
+      });
     } catch (error) {
       console.error("Failed to create property:", error);
     }
   };
 
-  const filteredProperties = properties.filter(property => {
+  const filteredProperties = properties.filter((property) => {
     return (
       property.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (filters.location === '' || property.location.toLowerCase().includes(filters.location.toLowerCase())) &&
-      (filters.minPrice === '' || parseFloat(property.tokenPrice.replace('$', '')) >= parseFloat(filters.minPrice)) &&
-      (filters.maxPrice === '' || parseFloat(property.tokenPrice.replace('$', '')) <= parseFloat(filters.maxPrice)) &&
-      (filters.minYield === '' || parseFloat(property.rentalYield) >= parseFloat(filters.minYield))
+      (filters.location === "" ||
+        property.location.toLowerCase().includes(filters.location.toLowerCase())) &&
+      (filters.minPrice === "" ||
+        parseFloat(property.tokenPrice.replace("$", "")) >= parseFloat(filters.minPrice)) &&
+      (filters.maxPrice === "" ||
+        parseFloat(property.tokenPrice.replace("$", "")) <= parseFloat(filters.maxPrice)) &&
+      (filters.minYield === "" || parseFloat(property.rentalYield) >= parseFloat(filters.minYield))
     );
   });
 
@@ -130,7 +149,9 @@ export function PropertyListing() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">Name</Label>
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
                 <Input
                   id="name"
                   name="name"
@@ -140,7 +161,9 @@ export function PropertyListing() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="location" className="text-right">Location</Label>
+                <Label htmlFor="location" className="text-right">
+                  Location
+                </Label>
                 <Input
                   id="location"
                   name="location"
@@ -150,7 +173,9 @@ export function PropertyListing() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="tokenId" className="text-right">Token ID</Label>
+                <Label htmlFor="tokenId" className="text-right">
+                  Token ID
+                </Label>
                 <Input
                   id="tokenId"
                   name="tokenId"

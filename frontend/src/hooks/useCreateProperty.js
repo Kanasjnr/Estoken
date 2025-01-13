@@ -1,68 +1,72 @@
 import { useCallback } from "react";
-import useContractInstance from "./useContract";
-import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
 import { toast } from "react-toastify";
 import { baseSepolia } from "@reown/appkit/networks";
-import { ErrorDecoder } from "ethers-decode-error";
+import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
+import { ethers } from "ethers";
+import useSignerOrProvider from "./useSignerOrProvider";
+
+import ABI from "../abis/PropertyRegistry.json";
 
 const useCreateProperty = () => {
-  const contract = useContractInstance(true);
-  const { address } = useAppKitAccount();
+  const { address, isConnected } = useAppKitAccount();
   const { chainId } = useAppKitNetwork();
+  const { signer } = useSignerOrProvider();
 
   return useCallback(
-    async (name, location, tokenId) => {
+    async (contractAddress, name, location, tokenId) => {
       if (!name || !location || !tokenId) {
         toast.error("Name, location, and tokenId are required");
         return;
       }
 
-      if (!address) {
+      if (!address || !isConnected) {
         toast.error("Please connect your wallet");
         return;
       }
 
-      if (!contract) {
-        toast.error("Contract not found");
+      if (Number(chainId) !== Number(baseSepolia.id)) {
+        toast.error("Please switch network to Sepolia");
         return;
       }
 
-      if (Number(chainId) !== Number(baseSepolia.id)) {
-        toast.error("You're not connected to baseSepolia");
+      if (!signer) {
+        toast.error("Signer is not available");
         return;
       }
 
       try {
-        const estimatedGas = await contract.createProperty.estimateGas(
+        const contract = new ethers.Contract(
+          contractAddress,
+          ABI,
+          signer
+        );
+
+        const estimatedGas = await contract.estimateGas.addProperty(
           name,
           location,
           tokenId
         );
 
-        const tx = await contract.createProperty(name, location, tokenId, {
-          gasLimit: (estimatedGas * BigInt(120)) / BigInt(100),
+        const tx = await contract.addProperty(name, location, tokenId, {
+          gasLimit: estimatedGas.mul(120).div(100), // 20% buffer
         });
 
         const receipt = await tx.wait();
 
         if (receipt.status === 1) {
-          toast.success("Property created successfully");
-          return;
+          toast.success("Property created successfully!");
+        } else {
+          toast.error("Failed to create property.");
         }
-
-        toast.error("Failed to create Property");
-        return;
       } catch (error) {
-        const errorDecoder = ErrorDecoder.create();
-        const decodedError = errorDecoder.decode(error);
-
-        console.error("Error from Property creation", decodedError);
-        toast.error((await decodedError).reason);
+        console.error("Error creating property:", error);
+        const errorMessage =
+          error?.reason || "An error occurred while creating the property.";
+        toast.error(errorMessage);
       }
     },
-    [contract, address, chainId]
+    [address, isConnected, chainId, signer]
   );
 };
 
 export default useCreateProperty;
-
