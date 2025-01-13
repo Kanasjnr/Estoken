@@ -25,10 +25,12 @@ const usePropertyToken = () => {
         return;
       }
 
-    
-
       try {
-        const estimatedGas = await contract.mint.estimateGas(address, amount, data);
+        const estimatedGas = await contract.mint.estimateGas(
+          address,
+          amount,
+          data
+        );
 
         const tx = await contract.mint(address, amount, data, {
           gasLimit: (estimatedGas * BigInt(120)) / BigInt(100),
@@ -80,4 +82,3 @@ const usePropertyToken = () => {
 };
 
 export default usePropertyToken;
-

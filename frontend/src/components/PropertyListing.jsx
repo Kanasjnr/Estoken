@@ -1,39 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PropertyCard } from './PropertyCard'
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-
-const properties = [
-  { 
-    id: 1, 
-    name: "Luxury Apartment", 
-    location: "New York", 
-    valuation: "$1,000,000", 
-    tokenPrice: "$100", 
-    rentalYield: "5%",
-    image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
-  },
-  { 
-    id: 2, 
-    name: "Beach House", 
-    location: "Miami", 
-    valuation: "$750,000", 
-    tokenPrice: "$75", 
-    rentalYield: "4.5%",
-    image: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
-  },
-  { 
-    id: 3, 
-    name: "Mountain Cabin", 
-    location: "Aspen", 
-    valuation: "$500,000", 
-    tokenPrice: "$50", 
-    rentalYield: "3.8%",
-    image: "https://images.unsplash.com/photo-1518732714860-b62714ce0c59?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
-  },
-]
+import { Input } from "./ui/input"
+import { Label } from "./ui/label"
+import { Button } from "./ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
+import  useCreateProperty  from '../hooks/useCreateProperty'
+import usePropertyDetails from '../hooks/usePropertyDetails'
+import useContract from '../hooks/useContract'
+import propertyRegistryABI from '../abis/PropertyRegistry.json'
 
 export function PropertyListing() {
+  const [properties, setProperties] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filters, setFilters] = useState({
     location: '',
@@ -41,6 +18,44 @@ export function PropertyListing() {
     maxPrice: '',
     minYield: '',
   })
+  const [newProperty, setNewProperty] = useState({
+    name: '',
+    location: '',
+    tokenId: '',
+  })
+  const { addProperty } = useCreateProperty()
+  const propertyRegistryContract = useContract(import.meta.env.VITE_PROPERTY_REGISTRY_ADDRESS, propertyRegistryABI)
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      if (propertyRegistryContract) {
+        try {
+          const propertyCount = await propertyRegistryContract.propertyCount()
+          const fetchedProperties = []
+          for (let i = 1; i <= propertyCount; i++) {
+            const propertyDetails = await propertyRegistryContract.getProperty(i)
+            fetchedProperties.push({
+              id: i,
+              name: propertyDetails[0],
+              location: propertyDetails[1],
+              tokenId: propertyDetails[2].toString(),
+              isActive: propertyDetails[3],
+              // Placeholder values for now
+              valuation: '$1,000,000',
+              tokenPrice: '$100',
+              rentalYield: '5%',
+              image: 'https://via.placeholder.com/300x200'
+            })
+          }
+          setProperties(fetchedProperties)
+        } catch (error) {
+          console.error('Error fetching properties:', error)
+        }
+      }
+    }
+
+    fetchProperties()
+  }, [propertyRegistryContract])
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value)
@@ -51,6 +66,44 @@ export function PropertyListing() {
       ...filters,
       [e.target.name]: e.target.value
     })
+  }
+
+  const handleNewPropertyChange = (e) => {
+    setNewProperty({
+      ...newProperty,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleCreateProperty = async () => {
+    try {
+      const receipt = await addProperty(newProperty.name, newProperty.location, newProperty.tokenId)
+      if (receipt) {
+        // Refresh the properties list after adding a new property
+        const propertyCount = await propertyRegistryContract.propertyCount()
+        const newPropertyDetails = await propertyRegistryContract.getProperty(propertyCount)
+        const newPropertyWithId = {
+          id: propertyCount,
+          name: newPropertyDetails[0],
+          location: newPropertyDetails[1],
+          tokenId: newPropertyDetails[2].toString(),
+          isActive: newPropertyDetails[3],
+          // Placeholder values
+          valuation: '$1,000,000',
+          tokenPrice: '$100',
+          rentalYield: '5%',
+          image: 'https://via.placeholder.com/300x200'
+        }
+        setProperties([...properties, newPropertyWithId])
+        setNewProperty({
+          name: '',
+          location: '',
+          tokenId: '',
+        })
+      }
+    } catch (error) {
+      console.error("Failed to create property:", error)
+    }
   }
 
   const filteredProperties = properties.filter(property => {
@@ -65,7 +118,58 @@ export function PropertyListing() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Property Listings</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Property Listings</h2>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>Create Property</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Property</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={newProperty.name}
+                  onChange={handleNewPropertyChange}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="location" className="text-right">
+                  Location
+                </Label>
+                <Input
+                  id="location"
+                  name="location"
+                  value={newProperty.location}
+                  onChange={handleNewPropertyChange}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="tokenId" className="text-right">
+                  Token ID
+                </Label>
+                <Input
+                  id="tokenId"
+                  name="tokenId"
+                  value={newProperty.tokenId}
+                  onChange={handleNewPropertyChange}
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+            <Button onClick={handleCreateProperty}>Create Property</Button>
+          </DialogContent>
+        </Dialog>
+      </div>
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="mb-4">
           <Label htmlFor="search">Search properties</Label>
