@@ -1,3 +1,4 @@
+import "./config/connection";
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
 import { SidebarProvider } from './components/SidebarProvider'
 import DashboardPage from './pages/DashboardPage'
