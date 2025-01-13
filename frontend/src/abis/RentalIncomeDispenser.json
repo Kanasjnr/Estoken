@@ -51,48 +51,23 @@
         {
           "indexed": true,
           "internalType": "uint256",
-          "name": "listingId",
+          "name": "tokenId",
           "type": "uint256"
         },
         {
           "indexed": true,
           "internalType": "address",
-          "name": "seller",
+          "name": "account",
           "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
         },
         {
           "indexed": false,
           "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "pricePerToken",
-          "type": "uint256"
         }
       ],
-      "name": "Listed",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "listingId",
-          "type": "uint256"
-        }
-      ],
-      "name": "ListingCancelled",
+      "name": "IncomeClaimed",
       "type": "event"
     },
     {
@@ -120,14 +95,8 @@
         {
           "indexed": true,
           "internalType": "uint256",
-          "name": "listingId",
+          "name": "tokenId",
           "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "buyer",
-          "type": "address"
         },
         {
           "indexed": false,
@@ -136,12 +105,12 @@
           "type": "uint256"
         }
       ],
-      "name": "Sale",
+      "name": "RentalIncomeReceived",
       "type": "event"
     },
     {
       "inputs": [],
-      "name": "TRANSACTION_FEE_PERCENTAGE",
+      "name": "RENTAL_MANAGEMENT_FEE_PERCENTAGE",
       "outputs": [
         {
           "internalType": "uint256",
@@ -156,16 +125,48 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "listingId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
+          "name": "tokenId",
           "type": "uint256"
         }
       ],
-      "name": "buyTokens",
+      "name": "claimIncome",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "claimedIncome",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "distributeRentalIncome",
       "outputs": [],
       "stateMutability": "payable",
       "type": "function"
@@ -174,85 +175,21 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "listingId",
-          "type": "uint256"
-        }
-      ],
-      "name": "cancelListing",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
         },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "pricePerToken",
-          "type": "uint256"
-        }
-      ],
-      "name": "createListing",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "listingCount",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "listings",
-      "outputs": [
         {
           "internalType": "address",
-          "name": "seller",
+          "name": "account",
           "type": "address"
-        },
+        }
+      ],
+      "name": "getUnclaimedIncome",
+      "outputs": [
         {
           "internalType": "uint256",
-          "name": "tokenId",
+          "name": "",
           "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "pricePerToken",
-          "type": "uint256"
-        },
-        {
-          "internalType": "bool",
-          "name": "isActive",
-          "type": "bool"
         }
       ],
       "stateMutability": "view",
@@ -372,6 +309,45 @@
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "rentalIncomes",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalSupply",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "claimedAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lastDistributionTimestamp",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes4",
           "name": "interfaceId",
           "type": "bytes4"
@@ -402,6 +378,19 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_newPropertyToken",
+          "type": "address"
+        }
+      ],
+      "name": "updatePropertyTokenAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "withdrawFees",
       "outputs": [],
@@ -409,3 +398,4 @@
       "type": "function"
     }
   ]
+  
