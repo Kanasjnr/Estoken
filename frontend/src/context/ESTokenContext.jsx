@@ -34,13 +34,13 @@ export const ESTokenProvider = ({ children }) => {
 
   useEffect(() => {
     if (!isInitialized) {
-      toast.warn("Please connect to CrossFi Testnet to use this application");
+      toast.warn("Please connect to base sepolia Testnet to use this application");
     }
   }, [isInitialized]);
 
   const mintTokens = useCallback(async (amount, data) => {
     if (!isInitialized) {
-      toast.error("Please connect to CrossFi Testnet");
+      toast.error("Please connect to base sepolia Testnet");
       return;
     }
     return mint(amount, data);
@@ -48,7 +48,7 @@ export const ESTokenProvider = ({ children }) => {
 
   const getTokenBalance = useCallback(async (tokenId) => {
     if (!isInitialized) {
-      toast.error("Please connect to CrossFi Testnet");
+      toast.error("Please connect to base sepolia Testnet");
       return;
     }
     return balanceOf(tokenId);
@@ -56,7 +56,7 @@ export const ESTokenProvider = ({ children }) => {
 
   const createMarketListing = useCallback(async (tokenId, amount, pricePerToken) => {
     if (!isInitialized) {
-      toast.error("Please connect to CrossFi Testnet");
+      toast.error("Please connect to base sepolia Testnet");
       return;
     }
     return createListing(tokenId, amount, pricePerToken);
@@ -64,7 +64,7 @@ export const ESTokenProvider = ({ children }) => {
 
   const purchaseTokens = useCallback(async (listingId, amount, value) => {
     if (!isInitialized) {
-      toast.error("Please connect to CrossFi Testnet");
+      toast.error("Please connect to base sepolia Testnet");
       return;
     }
     return buyTokens(listingId, amount, value);
@@ -72,7 +72,7 @@ export const ESTokenProvider = ({ children }) => {
 
   const distributeIncome = useCallback(async (tokenId, amount) => {
     if (!isInitialized) {
-      toast.error("Please connect to CrossFi Testnet");
+      toast.error("Please connect to base sepolia Testnet");
       return;
     }
     return distributeRentalIncome(tokenId, amount);
@@ -80,7 +80,7 @@ export const ESTokenProvider = ({ children }) => {
 
   const claimRentalIncome = useCallback(async (tokenId) => {
     if (!isInitialized) {
-      toast.error("Please connect to CrossFi Testnet");
+      toast.error("Please connect to base sepolia Testnet");
       return;
     }
     return claimIncome(tokenId);
@@ -88,7 +88,7 @@ export const ESTokenProvider = ({ children }) => {
 
   const getUnclaimedRentalIncome = useCallback(async (tokenId) => {
     if (!isInitialized) {
-      toast.error("Please connect to CrossFi Testnet");
+      toast.error("Please connect to base sepolia Testnet");
       return;
     }
     return getUnclaimedIncome(tokenId);

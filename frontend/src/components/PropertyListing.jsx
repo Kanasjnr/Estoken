@@ -1,110 +1,110 @@
-import { useState, useEffect } from 'react'
-import { PropertyCard } from './PropertyCard'
-import { Input } from "./ui/input"
-import { Label } from "./ui/label"
-import { Button } from "./ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
-import  useCreateProperty  from '../hooks/useCreateProperty'
-import usePropertyDetails from '../hooks/usePropertyDetails'
-import useContract from '../hooks/useContract'
-import propertyRegistryABI from '../abis/PropertyRegistry.json'
+import { useState, useEffect } from 'react';
+import { PropertyCard } from './PropertyCard';
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import useCreateProperty from '../hooks/useCreateProperty';
+import usePropertyDetails from '../hooks/usePropertyDetails';
+import useContract from '../hooks/useContract';
+import propertyRegistryABI from '../abis/PropertyRegistry.json';
 
 export function PropertyListing() {
-  const [properties, setProperties] = useState([])
-  const [searchTerm, setSearchTerm] = useState('')
+  const [properties, setProperties] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     location: '',
     minPrice: '',
     maxPrice: '',
     minYield: '',
-  })
+  });
   const [newProperty, setNewProperty] = useState({
     name: '',
     location: '',
     tokenId: '',
-  })
-  const { addProperty } = useCreateProperty()
-  const propertyRegistryContract = useContract(import.meta.env.VITE_PROPERTY_REGISTRY_ADDRESS, propertyRegistryABI)
+  });
+
+  // Correct usage of useCreateProperty
+  const addProperty = useCreateProperty();
+
+  const propertyRegistryContract = useContract(import.meta.env.VITE_PROPERTY_REGISTRY_ADDRESS, propertyRegistryABI);
 
   useEffect(() => {
     const fetchProperties = async () => {
       if (propertyRegistryContract) {
         try {
-          const propertyCount = await propertyRegistryContract.propertyCount()
-          const fetchedProperties = []
+          const propertyCount = await propertyRegistryContract.propertyCount();
+          const fetchedProperties = [];
           for (let i = 1; i <= propertyCount; i++) {
-            const propertyDetails = await propertyRegistryContract.getProperty(i)
+            const propertyDetails = await propertyRegistryContract.getProperty(i);
             fetchedProperties.push({
               id: i,
               name: propertyDetails[0],
               location: propertyDetails[1],
               tokenId: propertyDetails[2].toString(),
               isActive: propertyDetails[3],
-              // Placeholder values for now
               valuation: '$1,000,000',
               tokenPrice: '$100',
               rentalYield: '5%',
-              image: 'https://via.placeholder.com/300x200'
-            })
+              image: 'https://via.placeholder.com/300x200',
+            });
           }
-          setProperties(fetchedProperties)
+          setProperties(fetchedProperties);
         } catch (error) {
-          console.error('Error fetching properties:', error)
+          console.error('Error fetching properties:', error);
         }
       }
-    }
+    };
 
-    fetchProperties()
-  }, [propertyRegistryContract])
+    fetchProperties();
+  }, [propertyRegistryContract]);
 
   const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value)
-  }
+    setSearchTerm(e.target.value);
+  };
 
   const handleFilterChange = (e) => {
     setFilters({
       ...filters,
-      [e.target.name]: e.target.value
-    })
-  }
+      [e.target.name]: e.target.value,
+    });
+  };
 
   const handleNewPropertyChange = (e) => {
     setNewProperty({
       ...newProperty,
-      [e.target.name]: e.target.value
-    })
-  }
+      [e.target.name]: e.target.value,
+    });
+  };
 
   const handleCreateProperty = async () => {
     try {
-      const receipt = await addProperty(newProperty.name, newProperty.location, newProperty.tokenId)
+      const receipt = await addProperty(newProperty.name, newProperty.location, newProperty.tokenId);
       if (receipt) {
-        // Refresh the properties list after adding a new property
-        const propertyCount = await propertyRegistryContract.propertyCount()
-        const newPropertyDetails = await propertyRegistryContract.getProperty(propertyCount)
+        const propertyCount = await propertyRegistryContract.propertyCount();
+        const newPropertyDetails = await propertyRegistryContract.getProperty(propertyCount);
         const newPropertyWithId = {
           id: propertyCount,
           name: newPropertyDetails[0],
           location: newPropertyDetails[1],
           tokenId: newPropertyDetails[2].toString(),
           isActive: newPropertyDetails[3],
-          // Placeholder values
           valuation: '$1,000,000',
           tokenPrice: '$100',
           rentalYield: '5%',
-          image: 'https://via.placeholder.com/300x200'
-        }
-        setProperties([...properties, newPropertyWithId])
+          image: 'https://via.placeholder.com/300x200',
+        };
+        setProperties([...properties, newPropertyWithId]);
         setNewProperty({
           name: '',
           location: '',
           tokenId: '',
-        })
+        });
       }
     } catch (error) {
-      console.error("Failed to create property:", error)
+      console.error("Failed to create property:", error);
     }
-  }
+  };
 
   const filteredProperties = properties.filter(property => {
     return (
@@ -113,8 +113,8 @@ export function PropertyListing() {
       (filters.minPrice === '' || parseFloat(property.tokenPrice.replace('$', '')) >= parseFloat(filters.minPrice)) &&
       (filters.maxPrice === '' || parseFloat(property.tokenPrice.replace('$', '')) <= parseFloat(filters.maxPrice)) &&
       (filters.minYield === '' || parseFloat(property.rentalYield) >= parseFloat(filters.minYield))
-    )
-  })
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -130,9 +130,7 @@ export function PropertyListing() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
+                <Label htmlFor="name" className="text-right">Name</Label>
                 <Input
                   id="name"
                   name="name"
@@ -142,9 +140,7 @@ export function PropertyListing() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="location" className="text-right">
-                  Location
-                </Label>
+                <Label htmlFor="location" className="text-right">Location</Label>
                 <Input
                   id="location"
                   name="location"
@@ -154,9 +150,7 @@ export function PropertyListing() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="tokenId" className="text-right">
-                  Token ID
-                </Label>
+                <Label htmlFor="tokenId" className="text-right">Token ID</Label>
                 <Input
                   id="tokenId"
                   name="tokenId"
@@ -234,6 +228,5 @@ export function PropertyListing() {
         ))}
       </div>
     </div>
-  )
+  );
 }
-

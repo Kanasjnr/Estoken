@@ -1,14 +1,16 @@
 import { useCallback } from "react";
-import useContract from "./useContract";
-import { useAppKitAccount } from "@reown/appkit/react";
+import useContractInstance from "./useContract";
+import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
 import { toast } from "react-toastify";
+import { baseSepolia } from "@reown/appkit/networks";
 import { ErrorDecoder } from "ethers-decode-error";
 
 const useCreateProperty = () => {
-  const contract = useContract("PropertyRegistry");
+  const contract = useContractInstance(true);
   const { address } = useAppKitAccount();
+  const { chainId } = useAppKitNetwork();
 
-  const addProperty = useCallback(
+  return useCallback(
     async (name, location, tokenId) => {
       if (!name || !location || !tokenId) {
         toast.error("Name, location, and tokenId are required");
@@ -25,63 +27,42 @@ const useCreateProperty = () => {
         return;
       }
 
+      if (Number(chainId) !== Number(baseSepolia.id)) {
+        toast.error("You're not connected to baseSepolia");
+        return;
+      }
+
       try {
-        const listingFee = await contract.listingFee();
-        const estimatedGas = await contract.addProperty.estimateGas(
+        const estimatedGas = await contract.createProperty.estimateGas(
           name,
           location,
-          tokenId,
-          { value: listingFee }
+          tokenId
         );
 
-        const tx = await contract.addProperty(name, location, tokenId, {
-          value: listingFee,
+        const tx = await contract.createProperty(name, location, tokenId, {
           gasLimit: (estimatedGas * BigInt(120)) / BigInt(100),
         });
 
         const receipt = await tx.wait();
 
         if (receipt.status === 1) {
-          toast.success("Property added successfully");
-          return receipt;
+          toast.success("Property created successfully");
+          return;
         }
 
-        toast.error("Failed to add property");
+        toast.error("Failed to create Property");
+        return;
       } catch (error) {
         const errorDecoder = ErrorDecoder.create();
         const decodedError = errorDecoder.decode(error);
 
-        console.error("Error adding property", decodedError);
+        console.error("Error from Property creation", decodedError);
         toast.error((await decodedError).reason);
       }
     },
-    [contract, address]
+    [contract, address, chainId]
   );
-
-  const getProperty = useCallback(
-    async (propertyId) => {
-      if (!contract) {
-        toast.error("Contract not found");
-        return;
-      }
-
-      try {
-        const property = await contract.getProperty(propertyId);
-        return {
-          name: property[0],
-          location: property[1],
-          tokenId: property[2],
-          isActive: property[3],
-        };
-      } catch (error) {
-        console.error("Error fetching property", error);
-        toast.error("Failed to fetch property");
-      }
-    },
-    [contract]
-  );
-
-  return { addProperty, getProperty };
 };
 
 export default useCreateProperty;
+

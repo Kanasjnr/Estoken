@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Contract } from 'ethers';
 import useSignerOrProvider from './useSignerOrProvider';
 
-const useContract = (address, abi) => {
+const useContractInstance = (address, abi) => {
   const [contract, setContract] = useState(null);
   const { signer, provider, readOnlyProvider } = useSignerOrProvider();
 
@@ -17,5 +17,5 @@ const useContract = (address, abi) => {
   return contract;
 };
 
-export default useContract;
+export default useContractInstance;
 
