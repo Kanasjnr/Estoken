@@ -3,15 +3,26 @@ import { PropertyCard } from "./PropertyCard";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 import useCreateProperty from "../../hooks/useCreateProperty";
 import { useAppKitAccount } from "@reown/appkit/react";
 import useFetchProperties from "../../hooks/useFetchProperties";
-import usePropertyDetails from "../../hooks/usePropertyDetails";
+
+// Simple CSS spinner loader with message
+const Loader = () => (
+  <div className="flex justify-center items-center flex-col">
+    <div className="w-16 h-16 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
+    <p className="mt-4 text-gray-600">Loading properties...</p>
+  </div>
+);
 
 export function PropertyListing() {
-  // State management for property list, search term, filters, etc.
-  const [propertyDetailsList, setPropertyDetailsList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     location: "",
@@ -27,35 +38,42 @@ export function PropertyListing() {
     listingFee: "",
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [filteredProperties, setFilteredProperties] = useState([]);
 
-  // Hooks to handle property creation and data fetching
   const addProperty = useCreateProperty();
   const { address } = useAppKitAccount();
-  const propertyIds = useFetchProperties();
+  const properties = useFetchProperties();
 
   useEffect(() => {
-    const fetchPropertyDetails = async () => {
-      setIsLoading(true);
-      const detailsList = await Promise.all(
-        propertyIds.map(async (id) => {
-          const details = await usePropertyDetails(id);
-          return details;
-        })
-      );
-      setPropertyDetailsList(detailsList.filter(Boolean));
+    if (properties && properties.length > 0) {
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 5000); // Simulate loading for 5 seconds
+    } else {
       setIsLoading(false);
-    };
-
-    if (propertyIds.length > 0) {
-      fetchPropertyDetails();
     }
-  }, [propertyIds]);
+  }, [properties]);
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
+  useEffect(() => {
+    if (properties && properties.length > 0) {
+      const filtered = properties.filter((property) => {
+        return (
+          property.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          (filters.location === "" ||
+            property.location.toLowerCase().includes(filters.location.toLowerCase())) &&
+          (filters.minPrice === "" ||
+            parseFloat(property.tokenId) >= parseFloat(filters.minPrice)) &&
+          (filters.maxPrice === "" ||
+            parseFloat(property.tokenId) <= parseFloat(filters.maxPrice)) &&
+          (filters.minYield === "" || parseFloat(property.isActive) >= parseFloat(filters.minYield))
+        );
+      });
+      setFilteredProperties(filtered);
+    }
+  }, [properties, filters, searchTerm]);
 
-  // Handle changes in the filter inputs
+  const handleSearchChange = (e) => setSearchTerm(e.target.value);
+
   const handleFilterChange = (e) => {
     setFilters({
       ...filters,
@@ -63,7 +81,6 @@ export function PropertyListing() {
     });
   };
 
-  // Handle changes in the property creation form
   const handleNewPropertyChange = (e) => {
     const { name, value } = e.target;
     setNewProperty({
@@ -72,34 +89,44 @@ export function PropertyListing() {
     });
   };
 
-  // Handle property creation form submission
   const handlePropertyCreation = async () => {
     try {
       const { name, location, tokenId, imageUrls, listingFee } = newProperty;
-      await addProperty(name, location, tokenId, imageUrls.split(','), listingFee);
-      setNewProperty({ name: "", location: "", tokenId: "", imageUrls: "", listingFee: "" });
+
+      const imageUrlsArray = imageUrls
+        .split(",")
+        .map((url) => url.trim())
+        .filter((url) => url);
+
+      if (imageUrlsArray.length === 0) {
+        alert("Please provide at least one valid image URL.");
+        return;
+      }
+
+      const createdPropertyId = await addProperty(
+        name,
+        location,
+        tokenId,
+        imageUrlsArray,
+        listingFee
+      );
+
+      setNewProperty({
+        name: "",
+        location: "",
+        tokenId: "",
+        imageUrls: "",
+        listingFee: "",
+      });
+
+      alert(`Property created successfully with ID: ${createdPropertyId}`);
     } catch (error) {
       console.error("Error creating property:", error);
     }
   };
 
-  // Apply search term and filter to properties list
-  const filteredProperties = propertyDetailsList.filter((property) => {
-    return (
-      property.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (filters.location === "" ||
-        property.location.toLowerCase().includes(filters.location.toLowerCase())) &&
-      (filters.minPrice === "" ||
-        parseFloat(property.tokenPrice.replace("$", "")) >= parseFloat(filters.minPrice)) &&
-      (filters.maxPrice === "" ||
-        parseFloat(property.tokenPrice.replace("$", "")) <= parseFloat(filters.maxPrice)) &&
-      (filters.minYield === "" || parseFloat(property.rentalYield) >= parseFloat(filters.minYield))
-    );
-  });
-
   return (
     <div className="space-y-6">
-      {/* Header Section */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Property Listings</h2>
         <Dialog>
@@ -111,7 +138,6 @@ export function PropertyListing() {
               <DialogTitle>Create New Property</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              {/* Property Form */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name">Name</Label>
                 <Input
@@ -153,7 +179,7 @@ export function PropertyListing() {
                   value={newProperty.imageUrls}
                   onChange={handleNewPropertyChange}
                   className="col-span-3"
-                  placeholder="Comma separated image URLs"
+                  placeholder="Comma-separated image URLs (e.g., https://image1.jpg, https://image2.jpg)"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -169,13 +195,11 @@ export function PropertyListing() {
                 />
               </div>
             </div>
-            {/* Create Property Button */}
             <Button onClick={handlePropertyCreation}>Create Property</Button>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Search and Filter Section */}
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="mb-4">
           <Label htmlFor="search">Search properties</Label>
@@ -188,7 +212,6 @@ export function PropertyListing() {
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Filters */}
           <div>
             <Label htmlFor="location">Location</Label>
             <Input
@@ -236,13 +259,14 @@ export function PropertyListing() {
         </div>
       </div>
 
-      {/* Property Cards Section */}
       {isLoading ? (
-        <p>Loading properties...</p>
+        <Loader />
+      ) : filteredProperties.length === 0 ? (
+        <p className="text-center text-gray-600">No properties created yet</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProperties.map((property) => (
-            <PropertyCard key={property.tokenId} property={property} />
+            <PropertyCard key={property.id} property={property} />
           ))}
         </div>
       )}

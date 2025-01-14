@@ -25,39 +25,31 @@ const useCreateProperty = () => {
         .VITE_APP_PROPERTY_REGISTRY_ADDRESS;
 
       try {
-        console.log("Creating contract instance...");
-
-        const contract = new ethers.Contract(
-          propertyRegistryAddress,
-          ABI,
-          signer
-        );
-        console.log("Contract Address:", propertyRegistryAddress);
-        console.log("Signer Address:", await signer.getAddress());
-
-        if (typeof contract.addProperty !== "function") {
-          throw new Error(
-            "addProperty function is not available in the contract."
-          );
+        // Validate imageUrls
+        if (!Array.isArray(imageUrls) || imageUrls.some(url => typeof url !== "string")) {
+          throw new Error("Invalid imageUrls: Must be an array of strings.");
         }
 
-        console.log("Preparing to call addProperty...");
-        console.log("Parameters:", {
-          name,
-          location,
-          tokenId,
-          imageUrls,
-          listingFee,
-        });
+        console.log("Image URLs:", imageUrls);
+
+        // Validate and convert listingFee to Wei
+        const fee = parseFloat(listingFee);
+        if (isNaN(fee) || fee <= 0) {
+          throw new Error("Invalid listing fee.");
+        }
+        const listingFeeInWei = ethers.parseUnits(fee.toString());
+
+        console.log("Creating contract instance...");
+        const contract = new ethers.Contract(propertyRegistryAddress, ABI, signer);
+        console.log("Contract Address:", propertyRegistryAddress);
 
         const tx = await contract.addProperty(
           name,
           location,
           tokenId,
           imageUrls,
-          {
-            value: ethers.parseUnits(listingFee.toString()),
-          }
+          listingFeeInWei,
+          { value: listingFeeInWei }
         );
 
         console.log("Transaction Sent:", tx.hash);
@@ -70,13 +62,7 @@ const useCreateProperty = () => {
         }
       } catch (error) {
         console.error("Error creating property:", error);
-        if (error.reason) {
-          toast.error(`Error: ${error.reason}`);
-        } else if (error.message) {
-          toast.error(`Error: ${error.message}`);
-        } else {
-          toast.error("An unknown error occurred while creating the property.");
-        }
+        toast.error(`Error: ${error.message || "An unknown error occurred."}`);
       }
     },
     [address, isConnected, signer]

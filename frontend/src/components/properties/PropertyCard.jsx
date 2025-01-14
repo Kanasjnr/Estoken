@@ -7,26 +7,29 @@ import usePropertyDetails from '../../hooks/usePropertyDetails';
 export function PropertyCard({ property }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const propertyDetails = usePropertyDetails(property.id);
+  
+  // Fallback to an empty array for imageUrls if it's undefined or null
+  const imageUrls = propertyDetails?.imageUrls || [];
 
   useEffect(() => {
-    if (propertyDetails?.imageUrls) {
+    if (imageUrls.length > 0) {
       setCurrentImageIndex(0); // Reset image index when property details change
     }
-  }, [propertyDetails]);
+  }, [imageUrls]);
 
   if (!propertyDetails) {
     return <div>Loading...</div>;
   }
 
   const nextImage = () => {
-    if (propertyDetails.imageUrls.length > 1) {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % propertyDetails.imageUrls.length);
+    if (imageUrls.length > 1) {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % imageUrls.length);
     }
   };
 
   const prevImage = () => {
-    if (propertyDetails.imageUrls.length > 1) {
-      setCurrentImageIndex((prevIndex) => (prevIndex - 1 + propertyDetails.imageUrls.length) % propertyDetails.imageUrls.length);
+    if (imageUrls.length > 1) {
+      setCurrentImageIndex((prevIndex) => (prevIndex - 1 + imageUrls.length) % imageUrls.length);
     }
   };
 
@@ -39,11 +42,11 @@ export function PropertyCard({ property }) {
       <CardContent>
         <div className="relative">
           <img
-            src={propertyDetails.imageUrls[currentImageIndex] || 'https://via.placeholder.com/300x200'}
+            src={imageUrls[currentImageIndex] || 'https://via.placeholder.com/300x200'}
             alt={`${propertyDetails.name} - Image ${currentImageIndex + 1}`}
             className="w-full h-48 object-cover rounded-md"
           />
-          {propertyDetails.imageUrls.length > 1 && (
+          {imageUrls.length > 1 && (
             <>
               <Button className="absolute left-2 top-1/2 transform -translate-y-1/2" onClick={prevImage}>
                 ←

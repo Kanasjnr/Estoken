@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/chart";
 import usePropertyDetails from "../../hooks/usePropertyDetails";
 
+// Static performance data
 const performanceData = [
   { month: "Jan", income: 4000 },
   { month: "Feb", income: 3000 },
@@ -23,25 +24,36 @@ const performanceData = [
   { month: "Apr", income: 4500 },
   { month: "May", income: 4800 },
   { month: "Jun", income: 5200 },
+  { month: "Jul", income: 6000 },
+  { month: "Aug", income: 7000 },
+  { month: "Sep", income: 8000 },
+  { month: "Oct", income: 9000 },
+  { month: "Nov", income: 10000 },
+  { month: "Dec", income: 11000 },
 ];
 
 export function PropertyDetails() {
   const { id } = useParams();
-  const propertyDetails = usePropertyDetails(id);
+  const { propertyDetails, loading, error } = usePropertyDetails(id);
 
-  if (!propertyDetails) {
+  // Loading and error states for property details
+  if (loading) {
     return <div>Loading property details...</div>;
   }
 
-  const soldTokensPercentage =
-    (propertyDetails.soldTokens / propertyDetails.totalTokens) * 100;
+  if (error) {
+    return <div>Error fetching property details: {error.message}</div>;
+  }
+
+  // Calculate the sold tokens percentage
+  const soldTokensPercentage = (propertyDetails.soldTokens / propertyDetails.totalTokens) * 100;
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">
-        {propertyDetails.name}
-      </h2>
+      {/* Property Name */}
+      <h2 className="text-2xl font-bold text-gray-800">{propertyDetails.name}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Property Details Section */}
         <div>
           <img
             src={propertyDetails.image || "https://via.placeholder.com/600x400"}
@@ -53,33 +65,17 @@ export function PropertyDetails() {
               <CardTitle>Property Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-2">
-                Location: {propertyDetails.location}
-              </p>
-              <p className="text-gray-600 mb-2">
-                Valuation: ${propertyDetails.valuation}
-              </p>
-              <p className="text-gray-600 mb-2">
-                Token Price: ${propertyDetails.tokenPrice}
-              </p>
-              <p className="text-gray-600 mb-2">
-                Rental Yield: {propertyDetails.rentalYield}%
-              </p>
-              <p className="text-gray-600 mb-2">
-                Property Type: {propertyDetails.propertyType || "N/A"}
-              </p>
-              <p className="text-gray-600 mb-2">
-                Year Built: {propertyDetails.yearBuilt || "N/A"}
-              </p>
-              <p className="text-gray-600 mb-2">
-                Square Footage: {propertyDetails.squareFootage || "N/A"} sq ft
-              </p>
-              <p className="text-gray-600">
-                {propertyDetails.description || "No description available."}
-              </p>
+              <p className="text-gray-600 mb-2">Location: {propertyDetails.location}</p>
+              <p className="text-gray-600 mb-2">Valuation: ${propertyDetails.valuation}</p>
+              <p className="text-gray-600 mb-2">Token Price: ${propertyDetails.tokenPrice}</p>
+              <p className="text-gray-600 mb-2">Rental Yield: {propertyDetails.rentalYield}%</p>
+              <p className="text-gray-600 mb-2">Property Type: {propertyDetails.propertyType || "N/A"}</p>
+              <p className="text-gray-600">{propertyDetails.description || "No description available."}</p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Tokenization and Performance Section */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -88,19 +84,17 @@ export function PropertyDetails() {
             <CardContent>
               <div className="flex justify-between mb-2">
                 <span className="text-gray-600">Total Tokens:</span>
-                <span className="font-semibold">
-                  {propertyDetails.totalTokens}
-                </span>
+                <span className="font-semibold">{propertyDetails.totalTokens}</span>
               </div>
               <div className="flex justify-between mb-2">
                 <span className="text-gray-600">Sold Tokens:</span>
-                <span className="font-semibold">
-                  {propertyDetails.soldTokens}
-                </span>
+                <span className="font-semibold">{propertyDetails.soldTokens}</span>
               </div>
               <Progress value={soldTokensPercentage} className="w-full" />
             </CardContent>
           </Card>
+
+          {/* Performance Metrics Section */}
           <Card>
             <CardHeader>
               <CardTitle>Performance Metrics</CardTitle>
@@ -108,16 +102,14 @@ export function PropertyDetails() {
             <CardContent>
               <div className="flex justify-between mb-2">
                 <span className="text-gray-600">Monthly Rental Income:</span>
-                <span className="font-semibold">
-                  ${propertyDetails.monthlyRentalIncome}
-                </span>
+                <span className="font-semibold">${propertyDetails.monthlyRentalIncome}</span>
               </div>
               <div className="flex justify-between mb-2">
                 <span className="text-gray-600">Occupancy Rate:</span>
-                <span className="font-semibold">
-                  {propertyDetails.occupancyRate}%
-                </span>
+                <span className="font-semibold">{propertyDetails.occupancyRate}%</span>
               </div>
+
+              {/* Static Bar Chart for Performance */}
               <div className="h-64 mt-4">
                 <ChartContainer
                   config={{

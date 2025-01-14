@@ -4,7 +4,7 @@ import propertyRegistryABI from '../abis/PropertyRegistry.json';
 
 const usePropertyDetails = (propertyId) => {
   const [propertyDetails, setPropertyDetails] = useState(null);
-  const propertyRegistryContract = useContract(import.meta.env.PROPERTY_REGISTRY_ADDRESS, propertyRegistryABI);
+  const propertyRegistryContract = useContract(import.meta.env.VITE_APP_PROPERTY_REGISTRY_ADDRESS, propertyRegistryABI);
 
   useEffect(() => {
     const fetchPropertyDetails = async () => {

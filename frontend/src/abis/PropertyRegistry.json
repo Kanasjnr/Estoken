@@ -30,13 +30,32 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
     ],
     "name": "FeesCollected",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "FeesWithdrawn",
     "type": "event"
   },
   {
@@ -90,6 +109,18 @@
         "internalType": "string[]",
         "name": "imageUrls",
         "type": "string[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "listingFee",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       }
     ],
     "name": "PropertyAdded",
@@ -127,6 +158,12 @@
         "internalType": "string[]",
         "name": "imageUrls",
         "type": "string[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "listingFee",
+        "type": "uint256"
       }
     ],
     "name": "PropertyUpdated",
@@ -153,11 +190,29 @@
         "internalType": "string[]",
         "name": "imageUrls",
         "type": "string[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "propertyListingFee",
+        "type": "uint256"
       }
     ],
     "name": "addProperty",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllProperties",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -194,6 +249,16 @@
         "internalType": "string[]",
         "name": "",
         "type": "string[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -241,6 +306,16 @@
         "internalType": "bool",
         "name": "isActive",
         "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "listingFee",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -275,6 +350,24 @@
       }
     ],
     "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "propertyId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newListingFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateListingFee",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
