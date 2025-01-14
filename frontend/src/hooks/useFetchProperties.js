@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import useContract from "./useContract";
 import propertyRegistryABI from "../abis/PropertyRegistry.json";
+import { Contract } from "ethers";
 
 const useFetchProperties = () => {
   const [properties, setProperties] = useState([]);
@@ -10,7 +11,7 @@ const useFetchProperties = () => {
     const fetchProperties = async () => {
       if (propertyRegistryContract) {
         try {
-          const propertyCount = await propertyRegistryContract.getPropertyCount();
+          const propertyCount = await Contract.getProperty();
           const propertyIds = Array.from({ length: propertyCount.toNumber() }, (_, i) => i + 1); // Assuming IDs start from 1
           setProperties(propertyIds);
         } catch (error) {

@@ -33,7 +33,6 @@ export function PropertyListing() {
   const { address } = useAppKitAccount();
   const propertyIds = useFetchProperties();
 
-  // Effect hook to fetch property details once property IDs are available
   useEffect(() => {
     const fetchPropertyDetails = async () => {
       setIsLoading(true);
@@ -52,7 +51,6 @@ export function PropertyListing() {
     }
   }, [propertyIds]);
 
-  // Handle search input changes
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };

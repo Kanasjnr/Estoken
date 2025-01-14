@@ -15,6 +15,7 @@ const usePropertyDetails = (propertyId) => {
             name: details[0],
             location: details[1],
             tokenId: details[2].toString(),
+            listingFee: details[4].toString(),
             isActive: details[3]
           });
         } catch (error) {
