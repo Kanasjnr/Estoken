@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { PropertyCard } from "./PropertyCard";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import useCreateProperty from "../hooks/useCreateProperty";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import useCreateProperty from "../../hooks/useCreateProperty";
 import { useAppKitAccount } from "@reown/appkit/react";
-import propertyRegistryABI from "../abis/PropertyRegistry.json";
-import { ethers } from "ethers";
+import useFetchProperties from "../../hooks/useFetchProperties";
+import usePropertyDetails from "../../hooks/usePropertyDetails";
 
 export function PropertyListing() {
-  const [properties, setProperties] = useState([]);
+  // State management for property list, search term, filters, etc.
+  const [propertyDetailsList, setPropertyDetailsList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     location: "",
@@ -22,54 +23,41 @@ export function PropertyListing() {
     name: "",
     location: "",
     tokenId: "",
+    imageUrls: "",
+    listingFee: "",
   });
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Hooks to handle property creation and data fetching
   const addProperty = useCreateProperty();
   const { address } = useAppKitAccount();
+  const propertyIds = useFetchProperties();
 
-  const propertyRegistryContractAddress = import.meta.env.VITE_PROPERTY_REGISTRY_ADDRESS;
-
+  // Effect hook to fetch property details once property IDs are available
   useEffect(() => {
-    const fetchProperties = async () => {
-      if (propertyRegistryContractAddress && address) {
-        try {
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
-          const contract = new ethers.Contract(
-            propertyRegistryContractAddress,
-            propertyRegistryABI,
-            provider
-          );
-
-          const propertyCount = await contract.propertyCount();
-          const fetchedProperties = [];
-          for (let i = 1; i <= propertyCount; i++) {
-            const propertyDetails = await contract.getProperty(i);
-            fetchedProperties.push({
-              id: i,
-              name: propertyDetails[0],
-              location: propertyDetails[1],
-              tokenId: propertyDetails[2].toString(),
-              isActive: propertyDetails[3],
-              valuation: "$1,000,000",
-              tokenPrice: "$100",
-              rentalYield: "5%",
-              image: "https://via.placeholder.com/300x200",
-            });
-          }
-          setProperties(fetchedProperties);
-        } catch (error) {
-          console.error("Error fetching properties:", error);
-        }
-      }
+    const fetchPropertyDetails = async () => {
+      setIsLoading(true);
+      const detailsList = await Promise.all(
+        propertyIds.map(async (id) => {
+          const details = await usePropertyDetails(id);
+          return details;
+        })
+      );
+      setPropertyDetailsList(detailsList.filter(Boolean));
+      setIsLoading(false);
     };
 
-    fetchProperties();
-  }, [propertyRegistryContractAddress, address]);
+    if (propertyIds.length > 0) {
+      fetchPropertyDetails();
+    }
+  }, [propertyIds]);
 
+  // Handle search input changes
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
 
+  // Handle changes in the filter inputs
   const handleFilterChange = (e) => {
     setFilters({
       ...filters,
@@ -77,52 +65,28 @@ export function PropertyListing() {
     });
   };
 
+  // Handle changes in the property creation form
   const handleNewPropertyChange = (e) => {
+    const { name, value } = e.target;
     setNewProperty({
       ...newProperty,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
-  const handleCreateProperty = async () => {
+  // Handle property creation form submission
+  const handlePropertyCreation = async () => {
     try {
-      const { name, location, tokenId } = newProperty;
-      await addProperty(propertyRegistryContractAddress, name, location, tokenId);
-
-      // Fetch the newly created property
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const contract = new ethers.Contract(
-        propertyRegistryContractAddress,
-        propertyRegistryABI,
-        provider
-      );
-      const propertyCount = await contract.propertyCount();
-      const newPropertyDetails = await contract.getProperty(propertyCount);
-
-      const newPropertyWithId = {
-        id: propertyCount,
-        name: newPropertyDetails[0],
-        location: newPropertyDetails[1],
-        tokenId: newPropertyDetails[2].toString(),
-        isActive: newPropertyDetails[3],
-        valuation: "$1,000,000",
-        tokenPrice: "$100",
-        rentalYield: "5%",
-        image: "https://via.placeholder.com/300x200",
-      };
-
-      setProperties([...properties, newPropertyWithId]);
-      setNewProperty({
-        name: "",
-        location: "",
-        tokenId: "",
-      });
+      const { name, location, tokenId, imageUrls, listingFee } = newProperty;
+      await addProperty(name, location, tokenId, imageUrls.split(','), listingFee);
+      setNewProperty({ name: "", location: "", tokenId: "", imageUrls: "", listingFee: "" });
     } catch (error) {
-      console.error("Failed to create property:", error);
+      console.error("Error creating property:", error);
     }
   };
 
-  const filteredProperties = properties.filter((property) => {
+  // Apply search term and filter to properties list
+  const filteredProperties = propertyDetailsList.filter((property) => {
     return (
       property.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (filters.location === "" ||
@@ -137,8 +101,9 @@ export function PropertyListing() {
 
   return (
     <div className="space-y-6">
+      {/* Header Section */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Property Listings</h2>
+        <h2 className="text-2xl font-bold">Property Listings</h2>
         <Dialog>
           <DialogTrigger asChild>
             <Button>Create Property</Button>
@@ -148,47 +113,71 @@ export function PropertyListing() {
               <DialogTitle>Create New Property</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              {/* Property Form */}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   name="name"
                   value={newProperty.name}
                   onChange={handleNewPropertyChange}
                   className="col-span-3"
+                  placeholder="Property name"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="location" className="text-right">
-                  Location
-                </Label>
+                <Label htmlFor="location">Location</Label>
                 <Input
                   id="location"
                   name="location"
                   value={newProperty.location}
                   onChange={handleNewPropertyChange}
                   className="col-span-3"
+                  placeholder="Location"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="tokenId" className="text-right">
-                  Token ID
-                </Label>
+                <Label htmlFor="tokenId">Token ID</Label>
                 <Input
                   id="tokenId"
                   name="tokenId"
                   value={newProperty.tokenId}
                   onChange={handleNewPropertyChange}
                   className="col-span-3"
+                  placeholder="Unique token ID"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="imageUrls">Image URLs</Label>
+                <Input
+                  id="imageUrls"
+                  name="imageUrls"
+                  value={newProperty.imageUrls}
+                  onChange={handleNewPropertyChange}
+                  className="col-span-3"
+                  placeholder="Comma separated image URLs"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="listingFee">Listing Fee (optional)</Label>
+                <Input
+                  id="listingFee"
+                  name="listingFee"
+                  value={newProperty.listingFee}
+                  onChange={handleNewPropertyChange}
+                  className="col-span-3"
+                  placeholder="Enter fee in wei (optional)"
+                  type="number"
                 />
               </div>
             </div>
-            <Button onClick={handleCreateProperty}>Create Property</Button>
+            {/* Create Property Button */}
+            <Button onClick={handlePropertyCreation}>Create Property</Button>
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Search and Filter Section */}
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="mb-4">
           <Label htmlFor="search">Search properties</Label>
@@ -201,6 +190,7 @@ export function PropertyListing() {
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Filters */}
           <div>
             <Label htmlFor="location">Location</Label>
             <Input
@@ -247,11 +237,17 @@ export function PropertyListing() {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProperties.map((property) => (
-          <PropertyCard key={property.id} property={property} />
-        ))}
-      </div>
+
+      {/* Property Cards Section */}
+      {isLoading ? (
+        <p>Loading properties...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProperties.map((property) => (
+            <PropertyCard key={property.tokenId} property={property} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -5,7 +5,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +14,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import usePropertyDetails from "../hooks/usePropertyDetails";
+import usePropertyDetails from "../../hooks/usePropertyDetails";
 
 const performanceData = [
   { month: "Jan", income: 4000 },
