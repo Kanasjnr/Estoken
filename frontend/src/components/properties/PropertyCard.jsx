@@ -1,52 +1,67 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../ui/card";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import usePropertyDetails from '../../hooks/usePropertyDetails';
+import { ethers } from "ethers";
+import PropertyDetails from './PropertyDetails';
 
 export function PropertyCard({ property }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const propertyDetails = usePropertyDetails(property.id);
-  
-  // Fallback to an empty array for imageUrls if it's undefined or null
-  const imageUrls = propertyDetails?.imageUrls || [];
+  const { propertyDetails, isLoading, error } = usePropertyDetails(property.id);
 
   useEffect(() => {
-    if (imageUrls.length > 0) {
-      setCurrentImageIndex(0); // Reset image index when property details change
+    if (propertyDetails?.imageUrls?.length > 0) {
+      setCurrentImageIndex(0);
     }
-  }, [imageUrls]);
+  }, [propertyDetails]);
 
-  if (!propertyDetails) {
-    return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <Card className="overflow-hidden">
+        <CardContent>Loading property details...</CardContent>
+      </Card>
+    );
   }
 
+  if (error) {
+    return (
+      <Card className="overflow-hidden">
+        <CardContent>Error loading property details: {error.message}</CardContent>
+      </Card>
+    );
+  }
+
+  const details = propertyDetails || property;
+
   const nextImage = () => {
-    if (imageUrls.length > 1) {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % imageUrls.length);
+    if (details.imageUrls && details.imageUrls.length > 1) {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % details.imageUrls.length);
     }
   };
 
   const prevImage = () => {
-    if (imageUrls.length > 1) {
-      setCurrentImageIndex((prevIndex) => (prevIndex - 1 + imageUrls.length) % imageUrls.length);
+    if (details.imageUrls && details.imageUrls.length > 1) {
+      setCurrentImageIndex((prevIndex) => (prevIndex - 1 + details.imageUrls.length) % details.imageUrls.length);
     }
   };
 
   return (
     <Card className="overflow-hidden">
       <CardHeader>
-        <CardTitle>{propertyDetails.name}</CardTitle>
-        <CardDescription>{propertyDetails.location}</CardDescription>
+        <CardTitle>{details.name}</CardTitle>
+        <CardDescription>{details.location}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="relative">
+        <div className="relative mb-4">
           <img
-            src={imageUrls[currentImageIndex] || 'https://via.placeholder.com/300x200'}
-            alt={`${propertyDetails.name} - Image ${currentImageIndex + 1}`}
+            src={property.imageUrls && property.imageUrls.length > 0 
+              ? property.imageUrls[currentImageIndex] 
+              : 'https://via.placeholder.com/300x200'}
+            alt={`${property.name} - Image ${currentImageIndex + 1}`}
             className="w-full h-48 object-cover rounded-md"
           />
-          {imageUrls.length > 1 && (
+          {property.imageUrls && property.imageUrls.length > 1 && (
             <>
               <Button className="absolute left-2 top-1/2 transform -translate-y-1/2" onClick={prevImage}>
                 ←
@@ -57,30 +72,27 @@ export function PropertyCard({ property }) {
             </>
           )}
         </div>
-        <p className="text-sm text-gray-500">Token ID: {propertyDetails.tokenId}</p>
-        <p className="text-sm text-gray-500">Active: {propertyDetails.isActive ? 'Yes' : 'No'}</p>
-        <p className="text-sm text-gray-500">Valuation: {propertyDetails.valuation}</p>
-        <p className="text-sm text-gray-500">Token Price: {propertyDetails.tokenPrice}</p>
-        <p className="text-sm text-gray-500">Rental Yield: {propertyDetails.rentalYield}</p>
+        <div className="space-y-2">
+          <p className="text-sm text-gray-500">Token ID: {details.tokenId}</p>
+          <p className="text-sm text-gray-500">Active: {details.isActive ? 'Yes' : 'No'}</p>
+          <p className="text-sm text-gray-500">Listing Fee: {property.listingFee ? ethers.formatEther(property.listingFee.toString()) : '0'} ETH</p>
+        </div>
       </CardContent>
       <CardFooter>
         <Dialog>
           <DialogTrigger asChild>
             <Button className="w-full">View Details</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{propertyDetails.name}</DialogTitle>
+              <DialogTitle>{details.name}</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <p>Location: {propertyDetails.location}</p>
-              <p>Token ID: {propertyDetails.tokenId}</p>
-              <p>Listing Fee: {propertyDetails.listingFee} wei</p>
-              <p>Status: {propertyDetails.isActive ? "Active" : "Inactive"}</p>
-            </div>
+            <PropertyDetails propertyId={property.id} />
+            <p>Listing Fee: {property.listingFee ? ethers.formatEther(property.listingFee.toString()) : '0'} ETH</p>
           </DialogContent>
         </Dialog>
       </CardFooter>
     </Card>
   );
 }
+

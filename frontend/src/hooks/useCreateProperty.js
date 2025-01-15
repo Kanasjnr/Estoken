@@ -10,7 +10,7 @@ const useCreateProperty = () => {
   const { signer } = useSignerOrProvider();
 
   return useCallback(
-    async (name, location, tokenId, imageUrls, listingFee) => {
+    async (name, location, tokenId, imageUrls, listingFeeInEther) => {
       if (!address || !isConnected) {
         toast.error("Please connect your wallet");
         return;
@@ -32,16 +32,15 @@ const useCreateProperty = () => {
 
         console.log("Image URLs:", imageUrls);
 
-        // Validate and convert listingFee to Wei
-        const fee = parseFloat(listingFee);
-        if (isNaN(fee) || fee <= 0) {
-          throw new Error("Invalid listing fee.");
-        }
-        const listingFeeInWei = ethers.parseUnits(fee.toString());
+        // Convert listingFee from Ether to Wei
+        const listingFeeInWei = ethers.parseUnits(listingFeeInEther, 'ether');
 
         console.log("Creating contract instance...");
         const contract = new ethers.Contract(propertyRegistryAddress, ABI, signer);
         console.log("Contract Address:", propertyRegistryAddress);
+
+       
+
 
         const tx = await contract.addProperty(
           name,
@@ -57,12 +56,14 @@ const useCreateProperty = () => {
 
         if (receipt.status === 1) {
           toast.success("Property created successfully!");
+          return receipt.transactionHash;
         } else {
-          toast.error("Failed to create property.");
+          throw new Error("Transaction failed");
         }
       } catch (error) {
         console.error("Error creating property:", error);
         toast.error(`Error: ${error.message || "An unknown error occurred."}`);
+        throw error;
       }
     },
     [address, isConnected, signer]

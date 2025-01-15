@@ -11,10 +11,10 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import useCreateProperty from "../../hooks/useCreateProperty";
-import { useAppKitAccount } from "@reown/appkit/react";
 import useFetchProperties from "../../hooks/useFetchProperties";
+import { ethers } from "ethers";
+import { toast } from "react-toastify";
 
-// Simple CSS spinner loader with message
 const Loader = () => (
   <div className="flex justify-center items-center flex-col">
     <div className="w-16 h-16 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
@@ -34,21 +34,21 @@ export function PropertyListing() {
     name: "",
     location: "",
     tokenId: "",
-    imageUrls: "",
+    imageUrls: [],
     listingFee: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [filteredProperties, setFilteredProperties] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const addProperty = useCreateProperty();
-  const { address } = useAppKitAccount();
   const properties = useFetchProperties();
 
   useEffect(() => {
     if (properties && properties.length > 0) {
       setTimeout(() => {
         setIsLoading(false);
-      }, 5000); // Simulate loading for 5 seconds
+      }, 1000);
     } else {
       setIsLoading(false);
     }
@@ -62,9 +62,9 @@ export function PropertyListing() {
           (filters.location === "" ||
             property.location.toLowerCase().includes(filters.location.toLowerCase())) &&
           (filters.minPrice === "" ||
-            parseFloat(property.tokenId) >= parseFloat(filters.minPrice)) &&
+            parseFloat(property.listingFee) >= parseFloat(filters.minPrice)) &&
           (filters.maxPrice === "" ||
-            parseFloat(property.tokenId) <= parseFloat(filters.maxPrice)) &&
+            parseFloat(property.listingFee) <= parseFloat(filters.maxPrice)) &&
           (filters.minYield === "" || parseFloat(property.isActive) >= parseFloat(filters.minYield))
         );
       });
@@ -83,23 +83,55 @@ export function PropertyListing() {
 
   const handleNewPropertyChange = (e) => {
     const { name, value } = e.target;
-    setNewProperty({
-      ...newProperty,
+    setNewProperty((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "estoken");
+
+    try {
+      setUploading(true);
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/dn2ed9k6p/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      const data = await response.json();
+      setNewProperty((prev) => ({
+        ...prev,
+        imageUrls: [...prev.imageUrls, data.secure_url],
+      }));
+
+      toast.success("Image uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handlePropertyCreation = async () => {
     try {
       const { name, location, tokenId, imageUrls, listingFee } = newProperty;
 
-      const imageUrlsArray = imageUrls
-        .split(",")
-        .map((url) => url.trim())
-        .filter((url) => url);
-
-      if (imageUrlsArray.length === 0) {
-        alert("Please provide at least one valid image URL.");
+      if (imageUrls.length === 0) {
+        toast.error("Please upload at least one image.");
         return;
       }
 
@@ -107,7 +139,7 @@ export function PropertyListing() {
         name,
         location,
         tokenId,
-        imageUrlsArray,
+        imageUrls,
         listingFee
       );
 
@@ -115,13 +147,14 @@ export function PropertyListing() {
         name: "",
         location: "",
         tokenId: "",
-        imageUrls: "",
+        imageUrls: [],
         listingFee: "",
       });
 
-      alert(`Property created successfully with ID: ${createdPropertyId}`);
+      toast.success(`Property created successfully with ID: ${createdPropertyId}`);
     } catch (error) {
       console.error("Error creating property:", error);
+      toast.error(`Failed to create property: ${error.message || "Unknown error"}`);
     }
   };
 
@@ -172,26 +205,27 @@ export function PropertyListing() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="imageUrls">Image URLs</Label>
+                <Label htmlFor="imageUrls">Upload Images</Label>
                 <Input
                   id="imageUrls"
-                  name="imageUrls"
-                  value={newProperty.imageUrls}
-                  onChange={handleNewPropertyChange}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
                   className="col-span-3"
-                  placeholder="Comma-separated image URLs (e.g., https://image1.jpg, https://image2.jpg)"
                 />
+                {uploading && <p>Uploading...</p>}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="listingFee">Listing Fee (optional)</Label>
+                <Label htmlFor="listingFee">Listing Fee (ETH)</Label>
                 <Input
                   id="listingFee"
                   name="listingFee"
                   value={newProperty.listingFee}
                   onChange={handleNewPropertyChange}
                   className="col-span-3"
-                  placeholder="Enter fee in wei (optional)"
+                  placeholder="Enter fee in ETH"
                   type="number"
+                  step="0.000000000000000001"
                 />
               </div>
             </div>
@@ -224,25 +258,27 @@ export function PropertyListing() {
             />
           </div>
           <div>
-            <Label htmlFor="minPrice">Min Price</Label>
+            <Label htmlFor="minPrice">Min Price (ETH)</Label>
             <Input
               id="minPrice"
               type="number"
-              placeholder="Min Price"
+              placeholder="Min Price in ETH"
               name="minPrice"
               value={filters.minPrice}
               onChange={handleFilterChange}
+              step="0.000000000000000001"
             />
           </div>
           <div>
-            <Label htmlFor="maxPrice">Max Price</Label>
+            <Label htmlFor="maxPrice">Max Price (ETH)</Label>
             <Input
               id="maxPrice"
               type="number"
-              placeholder="Max Price"
+              placeholder="Max Price in ETH"
               name="maxPrice"
               value={filters.maxPrice}
               onChange={handleFilterChange}
+              step="0.000000000000000001"
             />
           </div>
           <div>
@@ -264,7 +300,7 @@ export function PropertyListing() {
       ) : filteredProperties.length === 0 ? (
         <p className="text-center text-gray-600">No properties created yet</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProperties.map((property) => (
             <PropertyCard key={property.id} property={property} />
           ))}
@@ -273,3 +309,4 @@ export function PropertyListing() {
     </div>
   );
 }
+

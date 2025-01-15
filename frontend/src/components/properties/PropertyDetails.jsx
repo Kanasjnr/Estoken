@@ -1,62 +1,54 @@
-import { useParams } from "react-router-dom";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-} from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import usePropertyDetails from "../../hooks/usePropertyDetails";
+import React from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import usePropertyDetails from '../../hooks/usePropertyDetails';
 
-// Static performance data
 const performanceData = [
-  { month: "Jan", income: 4000 },
-  { month: "Feb", income: 3000 },
-  { month: "Mar", income: 5000 },
-  { month: "Apr", income: 4500 },
-  { month: "May", income: 4800 },
-  { month: "Jun", income: 5200 },
-  { month: "Jul", income: 6000 },
-  { month: "Aug", income: 7000 },
-  { month: "Sep", income: 8000 },
-  { month: "Oct", income: 9000 },
-  { month: "Nov", income: 10000 },
-  { month: "Dec", income: 11000 },
+  { month: 'Jan', income: 4000 },
+  { month: 'Feb', income: 3000 },
+  { month: 'Mar', income: 5000 },
+  { month: 'Apr', income: 4500 },
+  { month: 'May', income: 4800 },
+  { month: 'Jun', income: 5200 },
+  { month: 'Jul', income: 6000 },
+  { month: 'Aug', income: 7000 },
+  { month: 'Sep', income: 8000 },
+  { month: 'Oct', income: 9000 },
+  { month: 'Nov', income: 10000 },
+  { month: 'Dec', income: 11000 },
 ];
 
-export function PropertyDetails() {
-  const { id } = useParams();
-  const { propertyDetails, loading, error } = usePropertyDetails(id);
+export function PropertyDetails({ propertyId }) {
+  const { propertyDetails, isLoading, error } = usePropertyDetails(propertyId);
 
-  // Loading and error states for property details
-  if (loading) {
-    return <div>Loading property details...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <AiOutlineLoading3Quarters className="animate-spin text-4xl text-gray-500" />
+        <span className="ml-4 text-lg text-gray-600">Loading property details...</span>
+      </div>
+    );
   }
 
   if (error) {
-    return <div>Error fetching property details: {error.message}</div>;
+    return (
+      <div className="text-center py-10 text-red-500">
+        Error fetching property details: {error.message}
+      </div>
+    );
   }
 
-  // Calculate the sold tokens percentage
   const soldTokensPercentage = (propertyDetails.soldTokens / propertyDetails.totalTokens) * 100;
 
   return (
     <div className="space-y-6">
-      {/* Property Name */}
-      <h2 className="text-2xl font-bold text-gray-800">{propertyDetails.name}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Property Details Section */}
         <div>
           <img
-            src={propertyDetails.image || "https://via.placeholder.com/600x400"}
+            src={propertyDetails.imageUrls}
             alt={propertyDetails.name}
             className="w-full h-64 object-cover rounded-lg shadow-md"
           />
@@ -69,13 +61,12 @@ export function PropertyDetails() {
               <p className="text-gray-600 mb-2">Valuation: ${propertyDetails.valuation}</p>
               <p className="text-gray-600 mb-2">Token Price: ${propertyDetails.tokenPrice}</p>
               <p className="text-gray-600 mb-2">Rental Yield: {propertyDetails.rentalYield}%</p>
-              <p className="text-gray-600 mb-2">Property Type: {propertyDetails.propertyType || "N/A"}</p>
-              <p className="text-gray-600">{propertyDetails.description || "No description available."}</p>
+              <p className="text-gray-600 mb-2">Property Type: {propertyDetails.propertyType || 'N/A'}</p>
+              <p className="text-gray-600">{propertyDetails.description || 'No description available.'}</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Tokenization and Performance Section */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -94,7 +85,6 @@ export function PropertyDetails() {
             </CardContent>
           </Card>
 
-          {/* Performance Metrics Section */}
           <Card>
             <CardHeader>
               <CardTitle>Performance Metrics</CardTitle>
@@ -109,13 +99,12 @@ export function PropertyDetails() {
                 <span className="font-semibold">{propertyDetails.occupancyRate}%</span>
               </div>
 
-              {/* Static Bar Chart for Performance */}
               <div className="h-64 mt-4">
                 <ChartContainer
                   config={{
                     income: {
-                      label: "Monthly Income",
-                      color: "hsl(var(--chart-1))",
+                      label: 'Monthly Income',
+                      color: 'hsl(var(--chart-1))',
                     },
                   }}
                   className="h-full"
