@@ -20,7 +20,7 @@ const usePropertyDetails = (propertyId) => {
             tokenId: details[2].toString(),
             listingFee: details[4].toString(),
             isActive: details[3],
-            imageUrls: [] // Add this if you have image URLs, or fetch them separately
+            imageUrls: [] 
           });
         } catch (error) {
           console.error('Error fetching property details:', error);

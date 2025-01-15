@@ -1,93 +1,136 @@
-import  { useState } from 'react'
+import React, { useState } from 'react'
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Loader2 } from 'lucide-react'
+import usePropertyToken from '../../hooks/usePropertyToken'
+import useFetchProperties from '../../hooks/useFetchProperties'
 
 export function PropertyTokenization() {
-  const [propertyDetails, setPropertyDetails] = useState({
-    name: '',
-    location: '',
-    valuation: '',
-    rentalIncome: '',
-    tokenSupply: ''
-  })
+  const [selectedPropertyId, setSelectedPropertyId] = useState('')
+  const [tokenSupply, setTokenSupply] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(false)
+  const { mint } = usePropertyToken()
+  const properties = useFetchProperties()
 
-  const handleInputChange = (e) => {
-    setPropertyDetails({
-      ...propertyDetails,
-      [e.target.name]: e.target.value
-    })
-  }
-
-  const handleTokenize = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Tokenizing property:', propertyDetails)
+    setIsLoading(true)
+    setError(null)
+    setSuccess(false)
+
+    if (!selectedPropertyId || !tokenSupply) {
+      setError("Please fill in all fields")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const selectedProperty = properties.find(p => p.id === selectedPropertyId)
+      if (!selectedProperty) {
+        throw new Error("Selected property not found")
+      }
+
+      await mint({
+        ...selectedProperty,
+        tokenSupply: tokenSupply,
+      })
+      setSuccess(true)
+      setSelectedPropertyId('')
+      setTokenSupply('')
+    } catch (err) {
+      setError(err.message || "An error occurred while tokenizing the property.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Tokenize Your Property</h2>
-      <form onSubmit={handleTokenize} className="space-y-4">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">Property Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={propertyDetails.name}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="location" className="block text-sm font-medium text-gray-700">Location</label>
-          <input
-            type="text"
-            id="location"
-            name="location"
-            value={propertyDetails.location}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="valuation" className="block text-sm font-medium text-gray-700">Valuation</label>
-          <input
-            type="text"
-            id="valuation"
-            name="valuation"
-            value={propertyDetails.valuation}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="rentalIncome" className="block text-sm font-medium text-gray-700">Expected Rental Income</label>
-          <input
-            type="text"
-            id="rentalIncome"
-            name="rentalIncome"
-            value={propertyDetails.rentalIncome}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="tokenSupply" className="block text-sm font-medium text-gray-700">Token Supply</label>
-          <input
-            type="text"
-            id="tokenSupply"
-            name="tokenSupply"
-            value={propertyDetails.tokenSupply}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200"
-        >
-          Tokenize Property
-        </button>
-      </form>
-    </div>
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Tokenize Existing Property</CardTitle>
+        <CardDescription>Select an existing property and provide tokenization details.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="space-y-2">
+            <Label htmlFor="propertyId">Select Property</Label>
+            <Select
+              value={selectedPropertyId}
+              onValueChange={setSelectedPropertyId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a property" />
+              </SelectTrigger>
+              <SelectContent>
+                {properties.length === 0 ? (
+                  <SelectItem value="loading">Loading properties...</SelectItem>
+                ) : (
+                  properties.map((property) => (
+                    <SelectItem key={property.id} value={property.id}>
+                      {property.name} - {property.location}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-gray-500">Choose the property you want to tokenize.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="tokenSupply">Token Supply</Label>
+            <Input
+              id="tokenSupply"
+              placeholder="Enter token supply"
+              value={tokenSupply}
+              onChange={(e) => setTokenSupply(e.target.value)}
+            />
+            <p className="text-sm text-gray-500">The total number of tokens to be issued for this property.</p>
+          </div>
+          <Button type="submit" disabled={isLoading || properties.length === 0}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Tokenizing...
+              </>
+            ) : (
+              "Tokenize Property"
+            )}
+          </Button>
+        </form>
+      </CardContent>
+      <CardFooter>
+        {error && (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        {success && (
+          <Alert>
+            <AlertTitle>Success</AlertTitle>
+            <AlertDescription>Property has been successfully tokenized!</AlertDescription>
+          </Alert>
+        )}
+      </CardFooter>
+    </Card>
   )
 }
 

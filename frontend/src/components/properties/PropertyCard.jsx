@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../ui/card";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import usePropertyDetails from '../../hooks/usePropertyDetails';
 import { ethers } from "ethers";
-
+import PropertyDetails from './PropertyDetails';
 
 export function PropertyCard({ property }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -75,24 +75,20 @@ export function PropertyCard({ property }) {
         <div className="space-y-2">
           <p className="text-sm text-gray-500">Token ID: {details.tokenId}</p>
           <p className="text-sm text-gray-500">Active: {details.isActive ? 'Yes' : 'No'}</p>
-          Listing Fee: {ethers.formatEther(property.listingFee || '0')} ETH
-          </div>
+          <p className="text-sm text-gray-500">Listing Fee: {property.listingFee ? ethers.formatEther(property.listingFee.toString()) : '0'} ETH</p>
+        </div>
       </CardContent>
       <CardFooter>
         <Dialog>
           <DialogTrigger asChild>
             <Button className="w-full">View Details</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{details.name}</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <p>Location: {details.location}</p>
-              <p>Token ID: {details.tokenId}</p>
-              <p>Listing Fee: {ethers.formatEther(property.listingFee || '0')} ETH</p>
-              <p>Status: {details.isActive ? "Active" : "Inactive"}</p>
-            </div>
+            <PropertyDetails propertyId={property.id} />
+            <p>Listing Fee: {property.listingFee ? ethers.formatEther(property.listingFee.toString()) : '0'} ETH</p>
           </DialogContent>
         </Dialog>
       </CardFooter>

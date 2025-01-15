@@ -14,22 +14,20 @@ const useFetchProperties = () => {
       if (!propertyRegistryContract) return;
 
       try {
-        // Fetch all property IDs
         const propertyIds = await propertyRegistryContract.getAllProperties();
 
-        // Fetch details for each property
         const propertyDetails = await Promise.all(
           propertyIds.map(async (id) => {
             try {
               const property = await propertyRegistryContract.getProperty(id);
               return {
-                id: id.toString(), // Convert BigNumber to string for better compatibility
-                name: property[0], // Property name
-                location: property[1], // Property location
-                tokenId: property[2].toString(), // Convert tokenId to string
-                isActive: property[3], // Whether the property is active
+                id: id.toString(), 
+                name: property[0], 
+                location: property[1], 
+                tokenId: property[2].toString(), 
+                isActive: property[3], 
                 imageUrls: property[4],
-                listingFee: property[5].toString(), // Comma-separated image URLs
+                listingFee: property[5].toString(), 
               };
             } catch (error) {
               console.error(`Error fetching details for property ID ${id}:`, error);
@@ -38,7 +36,6 @@ const useFetchProperties = () => {
           })
         );
 
-        // Filter out null entries (failed fetches) and update state
         setProperties(propertyDetails.filter((property) => property !== null));
       } catch (error) {
         console.error("Error fetching properties:", error);
