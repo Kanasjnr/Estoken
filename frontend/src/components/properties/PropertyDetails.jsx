@@ -23,6 +23,7 @@ const performanceData = [
 
 export function PropertyDetails({ propertyId }) {
   const { propertyDetails, isLoading, error } = usePropertyDetails(propertyId);
+  console.log(propertyDetails)
 
   if (isLoading) {
     return (
@@ -41,15 +42,19 @@ export function PropertyDetails({ propertyId }) {
     );
   }
 
+  const { name, location, images } = propertyDetails;
+  const imageUrl = images[0] || "https://via.placeholder.com/400x300?text=No+Image";
+
+
   const soldTokensPercentage = (propertyDetails.soldTokens / propertyDetails.totalTokens) * 100;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <img
-            src={propertyDetails.imageUrls}
-            alt={propertyDetails.name}
+        <img
+            src={imageUrl}
+            alt={name}
             className="w-full h-64 object-cover rounded-lg shadow-md"
           />
           <Card className="mt-4">
