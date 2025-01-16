@@ -1,22 +1,28 @@
-import { useMemo } from "react";
-import useSignerOrProvider from "./useSignerOrProvider";
-import { Contract } from "ethers";
-import CONTRACT_ABI from "../abis/RealEstateToken.json";
+import { useState, useEffect } from 'react';
+import { Contract } from 'ethers';
+import useSignerOrProvider from './useSignerOrProvider';
 
-const useContractInstance = (withSigner = false) => {
-  const { signer, readOnlyProvider } = useSignerOrProvider();
-  return useMemo(() => {
-    if (withSigner) {
-      if (!signer) return null;
-      return new Contract(import.meta.VITE_APP_ESTOKEN_ADDRESS, CONTRACT_ABI, signer);
-    } else {
-      return new Contract(
-        CONTRACT_ABI.address,
-        CONTRACT_ABI.abi,
-        readOnlyProvider
-      );
+const useContract = (address, abi) => {
+  const [contract, setContract] = useState(null);
+  const [error, setError] = useState(null);
+  const { signer, provider, readOnlyProvider } = useSignerOrProvider();
+
+  useEffect(() => {
+    if (address && abi) {
+      try {
+        const contractProvider = signer || provider || readOnlyProvider;
+        const contractInstance = new Contract(address, abi, contractProvider);
+        setContract(contractInstance);
+        setError(null);
+      } catch (err) {
+        console.error("Error creating contract instance:", err);
+        setError(err.message);
+        setContract(null);
+      }
     }
-  }, [signer, readOnlyProvider, withSigner]);
+  }, [address, abi, signer, provider, readOnlyProvider]);
+
+  return { contract, error };
 };
 
-export default useContractInstance;
+export default useContract;

@@ -1,204 +1,159 @@
-import React, { useState } from "react";
-import { ethers } from "ethers";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Loader2 } from 'lucide-react';
-import { toast } from "react-toastify";
-import usePropertyTokenization from "../../hooks/usePropertyTokenization";
-import useFetchProperties from "../../hooks/useFetchProperties";
+import React, { useState } from 'react';
+import { useESToken } from '../../context/ESTokenContext';
+import useTokenizeProperty from '../../hooks/useTokenizeProperty';
 
-export function PropertyTokenization() {
-  const [selectedPropertyId, setSelectedPropertyId] = useState("");
-  const [valuation, setValuation] = useState("");
-  const [tokenPrice, setTokenPrice] = useState("");
-  const [rentalYield, setRentalYield] = useState("");
-  const [propertyType, setPropertyType] = useState("");
-  const [tokenSupply, setTokenSupply] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+const PropertyTokenization = () => {
+  const { isInitialized } = useESToken();
+  const { tokenizeProperty, loading, error } = useTokenizeProperty();
 
-  const { tokenizeProperty } = usePropertyTokenization();
-  const properties = useFetchProperties();
+  const [formData, setFormData] = useState({
+    name: '',
+    location: '',
+    description: '',
+    imageUrls: [''],
+    totalShares: '',
+    pricePerShare: ''
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  const handleImageUrlChange = (index, value) => {
+    const newImageUrls = [...formData.imageUrls];
+    newImageUrls[index] = value;
+    setFormData(prevState => ({
+      ...prevState,
+      imageUrls: newImageUrls
+    }));
+  };
+
+  const addImageUrl = () => {
+    setFormData(prevState => ({
+      ...prevState,
+      imageUrls: [...prevState.imageUrls, '']
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
+    if (!isInitialized) {
+      alert('Please connect to Base Sepolia Testnet');
+      return;
+    }
 
     try {
-      // Validate inputs
-      if (!selectedPropertyId || !valuation || !tokenPrice || !rentalYield || !propertyType || !tokenSupply) {
-        throw new Error("All fields are required");
-      }
-
-      if (parseFloat(valuation) <= 0 || parseFloat(tokenPrice) <= 0 || parseFloat(rentalYield) <= 0) {
-        throw new Error("Numeric values must be greater than 0");
-      }
-
-      if (parseInt(tokenSupply) <= 0) {
-        throw new Error("Token supply must be greater than 0");
-      }
-
-      const result = await tokenizeProperty(
-        selectedPropertyId,
-        valuation,
-        tokenPrice,
-        rentalYield,
-        propertyType,
-        tokenSupply
+      await tokenizeProperty(
+        formData.name,
+        formData.location,
+        formData.description,
+        formData.imageUrls.filter(url => url !== ''),
+        formData.totalShares,
+        formData.pricePerShare
       );
-
-      if (result) {
-        toast.success("Property tokenized successfully");
-        // Reset form
-        setSelectedPropertyId("");
-        setValuation("");
-        setTokenPrice("");
-        setRentalYield("");
-        setPropertyType("");
-        setTokenSupply("");
-      }
+      // Reset form after successful submission
+      setFormData({
+        name: '',
+        location: '',
+        description: '',
+        imageUrls: [''],
+        totalShares: '',
+        pricePerShare: ''
+      });
     } catch (err) {
-      console.error("Error in tokenizing property:", err);
-      setError(err.message || "Failed to tokenize property");
-      toast.error(err.message || "Failed to tokenize property");
-    } finally {
-      setIsLoading(false);
+      console.error('Error tokenizing property:', err);
     }
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Tokenize Existing Property</CardTitle>
-        <CardDescription>
-          Select an existing property and provide tokenization details.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="space-y-2">
-            <Label htmlFor="propertyId">Select Property</Label>
-            <Select
-              value={selectedPropertyId}
-              onValueChange={(value) => setSelectedPropertyId(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a property" />
-              </SelectTrigger>
-              <SelectContent>
-                {properties.length === 0 ? (
-                  <SelectItem value="loading">Loading properties...</SelectItem>
-                ) : (
-                  properties.map((property) => (
-                    <SelectItem key={property.id} value={property.id.toString()}>
-                      {property.name} - {property.location}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="valuation">Property Valuation (ETH)</Label>
-            <Input
-              id="valuation"
-              placeholder="Enter property valuation in ETH"
-              value={valuation}
-              onChange={(e) => setValuation(e.target.value)}
-              type="number"
-              step="0.000000000000000001"
-              min="0"
-              required
+    <div className="max-w-lg mx-auto mt-10">
+      <h2 className="text-2xl font-bold mb-4">Tokenize Property</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block mb-1">Name:</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            required
+            className="w-full px-3 py-2 border rounded"
+          />
+        </div>
+        <div>
+          <label className="block mb-1">Location:</label>
+          <input
+            type="text"
+            name="location"
+            value={formData.location}
+            onChange={handleInputChange}
+            required
+            className="w-full px-3 py-2 border rounded"
+          />
+        </div>
+        <div>
+          <label className="block mb-1">Description:</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+            required
+            className="w-full px-3 py-2 border rounded"
+          ></textarea>
+        </div>
+        <div>
+          <label className="block mb-1">Image URLs:</label>
+          {formData.imageUrls.map((url, index) => (
+            <input
+              key={index}
+              type="url"
+              value={url}
+              onChange={(e) => handleImageUrlChange(index, e.target.value)}
+              className="w-full px-3 py-2 border rounded mb-2"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tokenPrice">Token Price (ETH)</Label>
-            <Input
-              id="tokenPrice"
-              placeholder="Enter token price in ETH"
-              value={tokenPrice}
-              onChange={(e) => setTokenPrice(e.target.value)}
-              type="number"
-              step="0.000000000000000001"
-              min="0"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="rentalYield">Rental Yield (%)</Label>
-            <Input
-              id="rentalYield"
-              placeholder="Enter rental yield percentage"
-              value={rentalYield}
-              onChange={(e) => setRentalYield(e.target.value)}
-              type="number"
-              step="0.01"
-              min="0"
-              max="100"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="propertyType">Property Type</Label>
-            <Select
-              value={propertyType}
-              onValueChange={setPropertyType}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select property type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Residential">Residential</SelectItem>
-                <SelectItem value="Commercial">Commercial</SelectItem>
-                <SelectItem value="Industrial">Industrial</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tokenSupply">Token Supply</Label>
-            <Input
-              id="tokenSupply"
-              placeholder="Enter token supply"
-              value={tokenSupply}
-              onChange={(e) => setTokenSupply(e.target.value)}
-              type="number"
-              min="1"
-              required
-            />
-          </div>
-          {error && <div className="text-red-500">{error}</div>}
-          <Button type="submit" disabled={isLoading || properties.length === 0}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Tokenizing...
-              </>
-            ) : (
-              "Tokenize Property"
-            )}
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter></CardFooter>
-    </Card>
+          ))}
+          <button type="button" onClick={addImageUrl} className="text-blue-500">
+            + Add another image URL
+          </button>
+        </div>
+        <div>
+          <label className="block mb-1">Total Shares:</label>
+          <input
+            type="number"
+            name="totalShares"
+            value={formData.totalShares}
+            onChange={handleInputChange}
+            required
+            className="w-full px-3 py-2 border rounded"
+          />
+        </div>
+        <div>
+          <label className="block mb-1">Price Per Share (in ETH):</label>
+          <input
+            type="number"
+            step="0.000001"
+            name="pricePerShare"
+            value={formData.pricePerShare}
+            onChange={handleInputChange}
+            required
+            className="w-full px-3 py-2 border rounded"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading }
+          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+        >
+          {loading ? 'Processing...' : 'Tokenize Property'}
+        </button>
+      </form>
+      {error && <p className="text-red-500 mt-4">{error}</p>}
+    </div>
   );
-}
+};
 
 export default PropertyTokenization;
