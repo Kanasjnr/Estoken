@@ -1,73 +1,95 @@
-import React, { useState } from 'react'
-import { Button } from "@/components/ui/button"
+import React, { useState } from "react";
+import { ethers } from "ethers";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+  CardFooter
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Loader2 } from 'lucide-react'
-import usePropertyToken from '../../hooks/usePropertyToken'
-import useFetchProperties from '../../hooks/useFetchProperties'
+} from "@/components/ui/select";
+import { Loader2 } from 'lucide-react';
+import { toast } from "react-toastify";
+import usePropertyTokenization from "../../hooks/usePropertyTokenization";
+import useFetchProperties from "../../hooks/useFetchProperties";
 
 export function PropertyTokenization() {
-  const [selectedPropertyId, setSelectedPropertyId] = useState('')
-  const [tokenSupply, setTokenSupply] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
-  const { mint } = usePropertyToken()
-  const properties = useFetchProperties()
+  const [selectedPropertyId, setSelectedPropertyId] = useState("");
+  const [valuation, setValuation] = useState("");
+  const [tokenPrice, setTokenPrice] = useState("");
+  const [rentalYield, setRentalYield] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [tokenSupply, setTokenSupply] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const { tokenizeProperty } = usePropertyTokenization();
+  const properties = useFetchProperties();
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
-    setSuccess(false)
-
-    if (!selectedPropertyId || !tokenSupply) {
-      setError("Please fill in all fields")
-      setIsLoading(false)
-      return
-    }
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
-      const selectedProperty = properties.find(p => p.id === selectedPropertyId)
-      if (!selectedProperty) {
-        throw new Error("Selected property not found")
+      // Validate inputs
+      if (!selectedPropertyId || !valuation || !tokenPrice || !rentalYield || !propertyType || !tokenSupply) {
+        throw new Error("All fields are required");
       }
 
-      await mint({
-        ...selectedProperty,
-        tokenSupply: tokenSupply,
-      })
-      setSuccess(true)
-      setSelectedPropertyId('')
-      setTokenSupply('')
+      if (parseFloat(valuation) <= 0 || parseFloat(tokenPrice) <= 0 || parseFloat(rentalYield) <= 0) {
+        throw new Error("Numeric values must be greater than 0");
+      }
+
+      if (parseInt(tokenSupply) <= 0) {
+        throw new Error("Token supply must be greater than 0");
+      }
+
+      const result = await tokenizeProperty(
+        selectedPropertyId,
+        valuation,
+        tokenPrice,
+        rentalYield,
+        propertyType,
+        tokenSupply
+      );
+
+      if (result) {
+        toast.success("Property tokenized successfully");
+        // Reset form
+        setSelectedPropertyId("");
+        setValuation("");
+        setTokenPrice("");
+        setRentalYield("");
+        setPropertyType("");
+        setTokenSupply("");
+      }
     } catch (err) {
-      setError(err.message || "An error occurred while tokenizing the property.")
+      console.error("Error in tokenizing property:", err);
+      setError(err.message || "Failed to tokenize property");
+      toast.error(err.message || "Failed to tokenize property");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle>Tokenize Existing Property</CardTitle>
-        <CardDescription>Select an existing property and provide tokenization details.</CardDescription>
+        <CardDescription>
+          Select an existing property and provide tokenization details.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -75,7 +97,7 @@ export function PropertyTokenization() {
             <Label htmlFor="propertyId">Select Property</Label>
             <Select
               value={selectedPropertyId}
-              onValueChange={setSelectedPropertyId}
+              onValueChange={(value) => setSelectedPropertyId(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a property" />
@@ -85,14 +107,69 @@ export function PropertyTokenization() {
                   <SelectItem value="loading">Loading properties...</SelectItem>
                 ) : (
                   properties.map((property) => (
-                    <SelectItem key={property.id} value={property.id}>
+                    <SelectItem key={property.id} value={property.id.toString()}>
                       {property.name} - {property.location}
                     </SelectItem>
                   ))
                 )}
               </SelectContent>
             </Select>
-            <p className="text-sm text-gray-500">Choose the property you want to tokenize.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="valuation">Property Valuation (ETH)</Label>
+            <Input
+              id="valuation"
+              placeholder="Enter property valuation in ETH"
+              value={valuation}
+              onChange={(e) => setValuation(e.target.value)}
+              type="number"
+              step="0.000000000000000001"
+              min="0"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="tokenPrice">Token Price (ETH)</Label>
+            <Input
+              id="tokenPrice"
+              placeholder="Enter token price in ETH"
+              value={tokenPrice}
+              onChange={(e) => setTokenPrice(e.target.value)}
+              type="number"
+              step="0.000000000000000001"
+              min="0"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="rentalYield">Rental Yield (%)</Label>
+            <Input
+              id="rentalYield"
+              placeholder="Enter rental yield percentage"
+              value={rentalYield}
+              onChange={(e) => setRentalYield(e.target.value)}
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="propertyType">Property Type</Label>
+            <Select
+              value={propertyType}
+              onValueChange={setPropertyType}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select property type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Residential">Residential</SelectItem>
+                <SelectItem value="Commercial">Commercial</SelectItem>
+                <SelectItem value="Industrial">Industrial</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="tokenSupply">Token Supply</Label>
@@ -101,9 +178,12 @@ export function PropertyTokenization() {
               placeholder="Enter token supply"
               value={tokenSupply}
               onChange={(e) => setTokenSupply(e.target.value)}
+              type="number"
+              min="1"
+              required
             />
-            <p className="text-sm text-gray-500">The total number of tokens to be issued for this property.</p>
           </div>
+          {error && <div className="text-red-500">{error}</div>}
           <Button type="submit" disabled={isLoading || properties.length === 0}>
             {isLoading ? (
               <>
@@ -116,23 +196,9 @@ export function PropertyTokenization() {
           </Button>
         </form>
       </CardContent>
-      <CardFooter>
-        {error && (
-          <Alert variant="destructive">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        {success && (
-          <Alert>
-            <AlertTitle>Success</AlertTitle>
-            <AlertDescription>Property has been successfully tokenized!</AlertDescription>
-          </Alert>
-        )}
-      </CardFooter>
+      <CardFooter></CardFooter>
     </Card>
-  )
+  );
 }
 
-export default PropertyTokenization
-
+export default PropertyTokenization;

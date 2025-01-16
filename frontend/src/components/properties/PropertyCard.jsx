@@ -73,7 +73,7 @@ export function PropertyCard({ property }) {
           )}
         </div>
         <div className="space-y-2">
-          <p className="text-sm text-gray-500">Token ID: {details.tokenId}</p>
+          <p className="text-sm text-gray-500">Token ID: {property.tokenId}</p>
           <p className="text-sm text-gray-500">Active: {details.isActive ? 'Yes' : 'No'}</p>
           <p className="text-sm text-gray-500">Listing Fee: {property.listingFee ? ethers.formatEther(property.listingFee.toString()) : '0'} ETH</p>
         </div>
