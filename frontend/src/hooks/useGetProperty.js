@@ -2,15 +2,11 @@ import { useState, useEffect } from 'react';
 import useContract from './useContract';
 import ABI from "../abis/RealEstateToken.json";
 
-const usePropertyDetails = (propertyId) => {
-  const [propertyDetails, setPropertyDetails] = useState(null);
+const useGetProperty = (propertyId) => {
+  const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  const { contract, error: contractError } = useContract(
-    import.meta.env.VITE_APP_ESTOKEN_ADDRESS,
-    ABI
-  );
+  const { contract, error: contractError } = useContract(import.meta.env.VITE_APP_ESTOKEN_ADDRESS, ABI);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -28,7 +24,7 @@ const usePropertyDetails = (propertyId) => {
 
       try {
         const data = await contract.getProperty(propertyId);
-        setPropertyDetails({
+        setProperty({
           name: data[0],
           location: data[1],
           description: data[2],
@@ -52,7 +48,7 @@ const usePropertyDetails = (propertyId) => {
     }
   }, [propertyId, contract, contractError]);
 
-  return { propertyDetails, loading, error };
+  return { property, loading, error };
 };
 
-export default usePropertyDetails;
+export default useGetProperty;

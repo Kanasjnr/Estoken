@@ -1,131 +1,119 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { useParams } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import usePropertyDetails from '../../hooks/usePropertyDetails';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const performanceData = [
-  { month: 'Jan', income: 4000 },
-  { month: 'Feb', income: 3000 },
-  { month: 'Mar', income: 5000 },
-  { month: 'Apr', income: 4500 },
-  { month: 'May', income: 4800 },
-  { month: 'Jun', income: 5200 },
-  { month: 'Jul', income: 6000 },
-  { month: 'Aug', income: 7000 },
-  { month: 'Sep', income: 8000 },
-  { month: 'Oct', income: 9000 },
-  { month: 'Nov', income: 10000 },
-  { month: 'Dec', income: 11000 },
-];
+export function PropertyDetails() {
+  const { id } = useParams();
+  const { propertyDetails, loading, error } = usePropertyDetails(id);
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
 
-export function PropertyDetails({ propertyId }) {
-  const { propertyDetails, isLoading, error } = usePropertyDetails(propertyId);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <AiOutlineLoading3Quarters className="animate-spin text-4xl text-gray-500" />
-        <span className="ml-4 text-lg text-gray-600">Loading property details...</span>
-      </div>
-    );
+  if (loading) {
+    return <div className="text-center py-8">Loading property details...</div>;
   }
 
   if (error) {
-    return (
-      <div className="text-center py-10 text-red-500">
-        Error fetching property details: {error.message}
-      </div>
-    );
+    return <div className="text-center py-8 text-red-500">Error: {error}</div>;
   }
 
-  const soldTokensPercentage = (propertyDetails.soldTokens / propertyDetails.totalTokens) * 100;
+  if (!propertyDetails) {
+    return <div className="text-center py-8">No property details found</div>;
+  }
+
+  const nextImage = () => {
+    if (propertyDetails.imageUrls?.length > 1) {
+      setCurrentImageIndex((prevIndex) => 
+        (prevIndex + 1) % propertyDetails.imageUrls.length
+      );
+    }
+  };
+
+  const prevImage = () => {
+    if (propertyDetails.imageUrls?.length > 1) {
+      setCurrentImageIndex((prevIndex) => 
+        (prevIndex - 1 + propertyDetails.imageUrls.length) % propertyDetails.imageUrls.length
+      );
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <img
-            src={propertyDetails.imageUrls}
-            alt={propertyDetails.name}
-            className="w-full h-64 object-cover rounded-lg shadow-md"
-          />
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>Property Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-2">Location: {propertyDetails.location}</p>
-              <p className="text-gray-600 mb-2">Valuation: ${propertyDetails.valuation}</p>
-              <p className="text-gray-600 mb-2">Token Price: ${propertyDetails.tokenPrice}</p>
-              <p className="text-gray-600 mb-2">Rental Yield: {propertyDetails.rentalYield}%</p>
-              <p className="text-gray-600 mb-2">Property Type: {propertyDetails.propertyType || 'N/A'}</p>
-              <p className="text-gray-600">{propertyDetails.description || 'No description available.'}</p>
-            </CardContent>
-          </Card>
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>{propertyDetails.name}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="relative aspect-video">
+              <img
+                src={propertyDetails.imageUrls?.[currentImageIndex] || '/placeholder.svg?height=400&width=600'}
+                alt={`${propertyDetails.name} - Image ${currentImageIndex + 1}`}
+                className="w-full h-full object-cover rounded-lg"
+              />
+              {propertyDetails.imageUrls?.length > 1 && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2"
+                    onClick={prevImage}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                    onClick={nextImage}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
+            <div className="space-y-4">
+              <p><span className="font-medium">Location:</span> {propertyDetails.location}</p>
+              <p><span className="font-medium">Total Shares:</span> {propertyDetails.totalShares}</p>
+              <p><span className="font-medium">Price per Share:</span> {propertyDetails.pricePerShare} ETH</p>
+              <p><span className="font-medium">Status:</span> {propertyDetails.isActive ? "Active" : "Inactive"}</p>
+              <p><span className="font-medium">Last Rental Update:</span> {propertyDetails.lastRentalUpdate}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-        <div className="space-y-6">
+      <Tabs defaultValue="overview" className="mt-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="financials">Financials</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Tokenization Status</CardTitle>
+              <CardTitle>Property Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Total Tokens:</span>
-                <span className="font-semibold">{propertyDetails.totalTokens}</span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Sold Tokens:</span>
-                <span className="font-semibold">{propertyDetails.soldTokens}</span>
-              </div>
-              <Progress value={soldTokensPercentage} className="w-full" />
+              <p>{propertyDetails.description}</p>
             </CardContent>
           </Card>
-
+        </TabsContent>
+        <TabsContent value="financials" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Performance Metrics</CardTitle>
+              <CardTitle>Financial Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Monthly Rental Income:</span>
-                <span className="font-semibold">${propertyDetails.monthlyRentalIncome}</span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Occupancy Rate:</span>
-                <span className="font-semibold">{propertyDetails.occupancyRate}%</span>
-              </div>
-
-              <div className="h-64 mt-4">
-                <ChartContainer
-                  config={{
-                    income: {
-                      label: 'Monthly Income',
-                      color: 'hsl(var(--chart-1))',
-                    },
-                  }}
-                  className="h-full"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={performanceData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="income" fill="var(--color-income)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+              <div className="space-y-2">
+                <p><span className="font-medium">Accumulated Rental Income per Share:</span> {propertyDetails.accumulatedRentalIncomePerShare} ETH</p>
+                <p><span className="font-medium">Total Value:</span> {parseFloat(propertyDetails.pricePerShare) * parseFloat(propertyDetails.totalShares)} ETH</p>
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
-
-export default PropertyDetails;

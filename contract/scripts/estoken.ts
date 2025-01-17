@@ -8,17 +8,11 @@ async function deployAndVerify(
     console.log(`Deploying ${contractName}...`);
     const ContractFactory = await ethers.getContractFactory(contractName);
     const contract = await ContractFactory.deploy(...constructorArgs);
-    await contract.waitForDeployment();
+    await contract.waitForDeployment(); // Wait for deployment to be mined
     console.log(`${contractName} deployed to: ${contract.target}`);
 
-    // Verify the contract on Etherscan (if applicable)
-    if (process.env.BASESCAN_API_KEY) {
-      console.log(`Verifying ${contractName}...`);
-      await run("verify:verify", {
-        address: contract.target,
-        constructorArguments: constructorArgs,
-      });
-    }
+    // Verify the contract after deployment
+    await verifyContract(contract.target, constructorArgs);
 
     return contract;
   } catch (error) {
@@ -27,21 +21,26 @@ async function deployAndVerify(
   }
 }
 
+async function verifyContract(address: string, constructorArgs: any[]) {
+  console.log("Verifying contract...");
+  try {
+    await run("verify:verify", {
+      address,
+      constructorArguments: constructorArgs,
+    });
+    console.log("Contract verified successfully!");
+  } catch (error) {
+    console.error("Contract verification failed:", error);
+  }
+}
+
 async function main() {
   try {
-    // Deploy contracts
-    const propertyToken = await deployAndVerify("PropertyToken");
-    const propertyRegistry = await deployAndVerify("PropertyRegistry");
-    const marketplace = await deployAndVerify("Marketplace", [
-      propertyToken.target,
-    ]);
-    const rentalIncomeDispenser = await deployAndVerify(
-      "RentalIncomeDispenser",
-      [propertyToken.target]
-    );
-    const userRegistry = await deployAndVerify("UserRegistry");
+    // Deploy RealEstateToken contract
+    const realEstateToken = await deployAndVerify("RealEstateToken");
 
-    console.log("All contracts deployed and verified successfully!");
+    console.log("RealEstateToken contract deployed and verified successfully!");
+    console.log("Contract address:", realEstateToken.target);
   } catch (error) {
     console.error("Deployment or verification failed:", error);
     process.exitCode = 1;
