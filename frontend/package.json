@@ -18,6 +18,8 @@
     "@radix-ui/react-progress": "^1.1.1",
     "@radix-ui/react-select": "^2.1.4",
     "@radix-ui/react-slot": "^1.1.1",
+    "@radix-ui/react-switch": "^1.1.2",
+    "@radix-ui/react-tabs": "^1.1.2",
     "@reown/appkit": "^1.6.0",
     "@reown/appkit-adapter-ethers": "^1.6.0",
     "autoprefixer": "^10.4.20",
