@@ -36,7 +36,7 @@ const useAllProperties = () => {
         const total = Number(totalProperties.toString());
 
         const fetchedProperties = [];
-        for (let i = 0; i < total; i++) {
+        for (let i = 1; i <= total; i++) {
           try {
             const data = await contract.getProperty(i);
             fetchedProperties.push({
@@ -46,8 +46,8 @@ const useAllProperties = () => {
               description: data[2],
               imageUrls: data[3],
               totalShares: data[4].toString(),
-              pricePerShare: ethers.formatUnits(data[5], 18), // Convert wei to ETH
-              accumulatedRentalIncomePerShare: ethers.formatUnits(data[6], 18),
+              pricePerShare: ethers.formatEther(data[5]), // Convert wei to ETH
+              accumulatedRentalIncomePerShare: ethers.formatEther(data[6]),
               lastRentalUpdate: new Date(Number(data[7]) * 1000).toLocaleString(),
               isActive: data[8],
             });

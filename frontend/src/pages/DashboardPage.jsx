@@ -5,8 +5,9 @@ import { DashboardContent } from '../components/DashboardContent'
 import { PropertyGrid } from '../components/properties/PropertyGrid'
 import PropertyTokenization from '../components/properties/PropertyTokenization'
 import { RentalIncome } from '../components/RentalIncome'
-import { Marketplace } from '../components/Marketplace'
+// import { Marketplace } from '../components/Marketplace'
 import { PropertyDetails } from '../components/properties/PropertyDetails'
+import PropertyTokenPurchase from '../components/PropertyTokenPurchase'
 
 export function DashboardPage() {
   return (
@@ -22,7 +23,7 @@ export function DashboardPage() {
             
             <Route path="/tokenization" element={<PropertyTokenization />} />
             <Route path="/rental" element={<RentalIncome />} />
-            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/marketplace" element={<PropertyTokenPurchase />} />
           </Routes>
         </main>
       </div>

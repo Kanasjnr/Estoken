@@ -32,7 +32,7 @@ const useGetProperty = (propertyId) => {
           totalShares: data[4].toString(),
           pricePerShare: data[5].toString(),
           accumulatedRentalIncomePerShare: data[6].toString(),
-          lastRentalUpdate: new Date(data[7].toNumber() * 1000).toLocaleString(),
+          lastRentalUpdate: new Date(Number(data[7]) * 1000).toLocaleString(),
           isActive: data[8]
         });
       } catch (err) {
