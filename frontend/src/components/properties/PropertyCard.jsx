@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,7 +65,6 @@ export function PropertyCard({ property }) {
         )}
       </div>
 
-      {/* Content Section */}
       <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
           <div className="mb-4 sm:mb-0">
@@ -97,7 +96,6 @@ export function PropertyCard({ property }) {
         </div>
       </CardContent>
 
-      {/* Footer Section */}
       <CardFooter className="bg-secondary p-4 sm:p-6">
         <div className="w-full flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
           <div className="flex items-center">
@@ -106,12 +104,13 @@ export function PropertyCard({ property }) {
               <strong>{property.currentInvestors}</strong> current investors
             </span>
           </div>
-          <Link to={`/properties/${property.id}`} className="w-full sm:w-1/2">
-            <Button className="w-full text-sm sm:text-lg py-4 sm:py-6 hover:scale-105 transition-transform">
-              <ChevronRight className="mr-2" />
-              View Details
-            </Button>
-          </Link>
+          <Link to={`/dashboard/properties/${property.id}`} className="w-full sm:w-1/2">
+          <Button className="w-full text-sm sm:text-lg py-4 sm:py-6 hover:scale-105 transition-transform">
+            <ChevronRight className="mr-2" />
+            View Details
+          </Button>
+        </Link>
+
         </div>
       </CardFooter>
     </Card>

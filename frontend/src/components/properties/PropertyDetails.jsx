@@ -1,119 +1,119 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import usePropertyDetails from '../../hooks/usePropertyDetails';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useParams } from "react-router-dom";
+import { useState } from "react";
+import useGetProperty from "../../hooks/useGetProperty";
+import { formatEther } from "ethers";
+
+// Loader component
+const Loader = () => (
+  <div className="flex justify-center items-center flex-col">
+    <div className="w-16 h-16 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
+    <p className="mt-4 text-gray-600">Loading details...</p>
+  </div>
+);
 
 export function PropertyDetails() {
   const { id } = useParams();
-  const { propertyDetails, loading, error } = usePropertyDetails(id);
-  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
-
-  if (loading) {
-    return <div className="text-center py-8">Loading property details...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center py-8 text-red-500">Error: {error}</div>;
-  }
-
-  if (!propertyDetails) {
-    return <div className="text-center py-8">No property details found</div>;
-  }
+  const { property, loading, error } = useGetProperty(id);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const nextImage = () => {
-    if (propertyDetails.imageUrls?.length > 1) {
-      setCurrentImageIndex((prevIndex) => 
-        (prevIndex + 1) % propertyDetails.imageUrls.length
-      );
-    }
+    setCurrentImageIndex(
+      (prevIndex) => (prevIndex + 1) % (property?.imageUrls?.length || 1)
+    );
   };
 
   const prevImage = () => {
-    if (propertyDetails.imageUrls?.length > 1) {
-      setCurrentImageIndex((prevIndex) => 
-        (prevIndex - 1 + propertyDetails.imageUrls.length) % propertyDetails.imageUrls.length
-      );
-    }
+    setCurrentImageIndex(
+      (prevIndex) =>
+        (prevIndex - 1 + (property?.imageUrls?.length || 1)) %
+        (property?.imageUrls?.length || 1)
+    );
   };
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>{propertyDetails.name}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="relative aspect-video">
-              <img
-                src={propertyDetails.imageUrls?.[currentImageIndex] || '/placeholder.svg?height=400&width=600'}
-                alt={`${propertyDetails.name} - Image ${currentImageIndex + 1}`}
-                className="w-full h-full object-cover rounded-lg"
-              />
-              {propertyDetails.imageUrls?.length > 1 && (
-                <>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2"
-                    onClick={prevImage}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                    onClick={nextImage}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-            </div>
-            <div className="space-y-4">
-              <p><span className="font-medium">Location:</span> {propertyDetails.location}</p>
-              <p><span className="font-medium">Total Shares:</span> {propertyDetails.totalShares}</p>
-              <p><span className="font-medium">Price per Share:</span> {propertyDetails.pricePerShare} ETH</p>
-              <p><span className="font-medium">Status:</span> {propertyDetails.isActive ? "Active" : "Inactive"}</p>
-              <p><span className="font-medium">Last Rental Update:</span> {propertyDetails.lastRentalUpdate}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+  if (loading) {
+    return <Loader />;
+  }
 
-      <Tabs defaultValue="overview" className="mt-6">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="financials">Financials</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Property Description</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{propertyDetails.description}</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="financials" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Financial Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p><span className="font-medium">Accumulated Rental Income per Share:</span> {propertyDetails.accumulatedRentalIncomePerShare} ETH</p>
-                <p><span className="font-medium">Total Value:</span> {parseFloat(propertyDetails.pricePerShare) * parseFloat(propertyDetails.totalShares)} ETH</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+  if (error) {
+    return (
+      <div className="text-center text-red-500 text-xl font-medium">
+        Error: {error}
+      </div>
+    );
+  }
+
+  if (!property) {
+    return (
+      <div className="text-center text-xl font-medium">No property found.</div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 p-6 max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl">
+      {/* Property Header */}
+      <div className="space-y-4 text-center">
+        <h1 className="text-4xl font-extrabold text-gray-900">
+          {property.name}
+        </h1>
+        <p className="text-xl text-gray-600">{property.location}</p>
+      </div>
+
+      {/* Image Carousel */}
+      {property.imageUrls.length > 0 && (
+        <div className="relative group">
+          <img
+            src={property.imageUrls[currentImageIndex]}
+            alt={`Property image ${currentImageIndex + 1}`}
+            className="w-full h-80 object-cover rounded-2xl shadow-lg transition-transform duration-500 ease-in-out transform group-hover:scale-105"
+          />
+          <div className="absolute inset-0 flex items-center justify-between px-4">
+            <button
+              onClick={prevImage}
+              className="bg-gray-800 text-white p-3 rounded-full opacity-75 hover:opacity-100 transition-opacity"
+              aria-label="Previous Image"
+            >
+              &larr;
+            </button>
+            <button
+              onClick={nextImage}
+              className="bg-gray-800 text-white p-3 rounded-full opacity-75 hover:opacity-100 transition-opacity"
+              aria-label="Next Image"
+            >
+              &rarr;
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Property Details */}
+      <div className="space-y-6">
+        <p className="text-lg text-gray-700">
+          <span className="font-semibold">Description:</span>{" "}
+          {property.description}
+        </p>
+        <div className="grid grid-cols-2 gap-4 text-lg text-gray-700">
+          <p>
+            <span className="font-semibold">Total Shares:</span>{" "}
+            {property.totalShares}
+          </p>
+          <p>
+            <span className="font-semibold">Available Shares:</span>{" "}
+            {property.availableShares}
+          </p>
+          <p>
+            <span className="font-semibold">Price Per Share:</span>{" "}
+            {formatEther(property.pricePerShare)} ETH
+          </p>
+          <p>
+            <span className="font-semibold">Last Rental Update:</span>{" "}
+            {property.lastRentalUpdate}
+          </p>
+          <p>
+            <span className="font-semibold">Status:</span>{" "}
+            {property.isActive ? "Active" : "Inactive"}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

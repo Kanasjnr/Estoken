@@ -1,12 +1,12 @@
-import { Routes, Route } from 'react-router-dom'
-import { Sidebar } from '../components/Sidebar'
-import { Header } from '../components/Header'
-import { DashboardContent } from '../components/DashboardContent'
-import { PropertyGrid } from '../components/properties/PropertyGrid'
-import PropertyTokenization from '../components/properties/PropertyTokenization'
-import { RentalIncome } from '../components/RentalIncome'
-import { Marketplace } from '../components/Marketplace'
-import { PropertyDetails } from '../components/properties/PropertyDetails'
+import { Routes, Route } from "react-router-dom"
+import { Sidebar } from "../components/Sidebar"
+import { Header } from "../components/Header"
+import  InvestmentPortfolio  from "../components/InvestmentPortfolio"
+import { PropertyGrid } from "../components/properties/PropertyGrid"
+import { PropertyDetails } from "../components/properties/PropertyDetails"
+import PropertyTokenization  from "../components/properties/PropertyTokenization"
+import { RentalIncome } from "../components/RentalIncome"
+import PropertyTokenPurchase from "../components/PropertyTokenPurchase"
 
 export function DashboardPage() {
   return (
@@ -16,13 +16,13 @@ export function DashboardPage() {
         <Header />
         <main className="flex-1 overflow-y-auto p-6">
           <Routes>
-            <Route path="/" element={<DashboardContent />} />
+            <Route path="/" element={<InvestmentPortfolio />} />
             <Route path="/properties" element={<PropertyGrid />} />
-            <Route path="/properties/:id" element={<PropertyDetails />}/>
-            
+            <Route path="/properties/:id" element={<PropertyDetails />} />
             <Route path="/tokenization" element={<PropertyTokenization />} />
+            <Route path="/marketplace" element={<PropertyTokenPurchase />} />
+            <Route path="/portfolio" element={<InvestmentPortfolio />} />
             <Route path="/rental" element={<RentalIncome />} />
-            <Route path="/marketplace" element={<Marketplace />} />
           </Routes>
         </main>
       </div>
