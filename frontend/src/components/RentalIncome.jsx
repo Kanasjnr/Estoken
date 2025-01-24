@@ -1,55 +1,132 @@
-
-const rentalIncomeData = [
-  { id: 1, property: "Luxury Apartment", amount: "$500", date: "2023-05-01", image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
-  { id: 2, property: "Beach House", amount: "$350", date: "2023-05-02", image: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
-  { id: 3, property: "Mountain Cabin", amount: "$250", date: "2023-05-03", image: "https://images.unsplash.com/photo-1518732714860-b62714ce0c59?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" },
-]
+import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import { formatEther } from "ethers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { useAppKitAccount } from "@reown/appkit/react";
+import useClaimRentalIncome from "../hooks/useClaimRentalIncome";
+import useAllProperties from "../hooks/useAllProperties";
 
 export function RentalIncome() {
+  const [rentalIncomes, setRentalIncomes] = useState([]);
+  const { address, isConnected } = useAppKitAccount();
+  const { claimRentalIncome, loading } = useClaimRentalIncome();
+  const { properties, loading: propertiesLoading, error: propertiesError } = useAllProperties();
+
+  useEffect(() => {
+    if (properties.length > 0) {
+      const incomeData = properties.map((property) => {
+        const accumulatedIncome = property.accumulatedRentalIncomePerShare;
+  
+        let amount = "0.0";
+        try {
+          if (accumulatedIncome) {
+            amount = formatEther(BigInt(accumulatedIncome));
+          }
+        } catch (error) {
+          console.warn(`Invalid accumulated income for property ${property.id}:`, error);
+        }
+  
+        let lastUpdate = "N/A";
+        if (property.lastRentalUpdate) {
+          try {
+            const timestamp = parseInt(property.lastRentalUpdate, 10);
+            if (!isNaN(timestamp)) {
+              lastUpdate = new Date(timestamp * 1000).toLocaleString();
+            }
+          } catch (error) {
+            console.warn(`Invalid date for property ${property.id}:`, error);
+          }
+        }
+  
+        return {
+          id: property.id,
+          propertyId: property.id,
+          propertyName: property.name,
+          amount,
+          lastUpdate,
+        };
+      });
+      setRentalIncomes(incomeData);
+    }
+  }, [properties]);
+  
+
+  const handleClaim = async (propertyId) => {
+    if (!isConnected) {
+      toast.error("Please connect your wallet to claim rental income.");
+      return;
+    }
+    try {
+      const success = await claimRentalIncome(propertyId);
+      if (success) {
+        toast.success("Rental income claimed successfully!");
+        // Optionally refresh rental income data here
+      }
+    } catch (err) {
+      console.error("Error claiming rental income:", err);
+      toast.error("Error claiming rental income.");
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Rental Income</h2>
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Property</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {rentalIncomeData.map((income) => (
-              <tr key={income.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
-                      <img className="h-10 w-10 rounded-full object-cover" src={income.image} alt={income.property} />
-                    </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{income.property}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{income.amount}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{income.date}</div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex justify-end">
-        <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors duration-200">
-          Withdraw Income
-        </button>
-      </div>
+      <h2 className="text-3xl font-bold">Rental Income</h2>
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Rental Incomes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Property</TableHead>
+                <TableHead>Amount (ETH)</TableHead>
+                <TableHead>Last Update</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {propertiesLoading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
+                    Loading rental incomes...
+                  </TableCell>
+                </TableRow>
+              ) : propertiesError ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-red-500">
+                    Error fetching rental incomes: {propertiesError}
+                  </TableCell>
+                </TableRow>
+              ) : rentalIncomes.length > 0 ? (
+                rentalIncomes.map((income) => (
+                  <TableRow key={income.id}>
+                    <TableCell>{income.propertyName}</TableCell>
+                    <TableCell>{income.amount}</TableCell>
+                    <TableCell>{income.lastUpdate}</TableCell>
+                    <TableCell>
+                      <Button
+                        onClick={() => handleClaim(income.propertyId)}
+                        disabled={loading}
+                      >
+                        {loading ? "Claiming..." : "Claim"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
+                    No rental incomes found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }
-
-export default RentalIncome
-

@@ -104,12 +104,12 @@ export function PropertyCard({ property }) {
               <strong>{property.currentInvestors}</strong> current investors
             </span>
           </div>
-          <Link to={`properties/${property.id}`} className="w-full sm:w-1/2">
-  <Button className="w-full text-sm sm:text-lg py-4 sm:py-6 hover:scale-105 transition-transform">
-    <ChevronRight className="mr-2" />
-    View Details
-  </Button>
-</Link>
+          <Link to={`/dashboard/properties/${property.id}`} className="w-full sm:w-1/2">
+          <Button className="w-full text-sm sm:text-lg py-4 sm:py-6 hover:scale-105 transition-transform">
+            <ChevronRight className="mr-2" />
+            View Details
+          </Button>
+        </Link>
 
         </div>
       </CardFooter>

@@ -492,52 +492,99 @@
         "type": "uint256"
       }
     ],
-    "name": "getProperty",
+    "name": "getAvailableShares",
     "outputs": [
       {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "location",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "description",
-        "type": "string"
-      },
-      {
-        "internalType": "string[]",
-        "name": "imageUrls",
-        "type": "string[]"
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "uint256",
-        "name": "totalShares",
+        "name": "propertyId",
         "type": "uint256"
-      },
+      }
+    ],
+    "name": "getPropertyFinancials",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "accumulatedRentalIncomePerShare",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lastRentalUpdate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "isActive",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct RealEstateToken.PropertyFinancials",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "uint256",
-        "name": "pricePerShare",
+        "name": "propertyId",
         "type": "uint256"
-      },
+      }
+    ],
+    "name": "getPropertyInfo",
+    "outputs": [
       {
-        "internalType": "uint256",
-        "name": "accumulatedRentalIncomePerShare",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "lastRentalUpdate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "isActive",
-        "type": "bool"
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "location",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "internalType": "string[]",
+            "name": "imageUrls",
+            "type": "string[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalShares",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "pricePerShare",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct RealEstateToken.PropertyInfo",
+        "name": "",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",

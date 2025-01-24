@@ -23,8 +23,13 @@ const useBuyTokens = () => {
         return false;
       }
 
-      if (!amount || isNaN(amount) || Number(amount) <= 0) {
-        toast.error("Invalid purchase amount");
+      if (!amount || isNaN(amount) || Number(amount) <= 0 || !Number.isInteger(Number(amount))) {
+        toast.error("Invalid purchase amount. Please enter a positive integer.");
+        return false;
+      }
+
+      if (!pricePerShare || isNaN(pricePerShare) || Number(pricePerShare) <= 0) {
+        toast.error("Invalid price per share. Please enter a positive number.");
         return false;
       }
 
@@ -33,32 +38,36 @@ const useBuyTokens = () => {
 
       const propertyRegistryAddress = import.meta.env.VITE_APP_ESTOKEN_ADDRESS;
 
+      if (!propertyRegistryAddress) {
+        toast.error("Contract address is not configured");
+        setLoading(false);
+        return false;
+      }
+
       try {
         const contract = new ethers.Contract(propertyRegistryAddress, ABI, signer);
 
-        // Ensure all inputs are valid BigNumber instances
-        const amountBN = ethers.BigNumber.from(amount);
-        const pricePerShareBN = ethers.utils.parseEther(pricePerShare.toString());
-        const totalPriceWei = pricePerShareBN.mul(amountBN);
+        // Ensure all inputs are valid BigInt instances
+        let amountBN, pricePerShareBN, totalPriceWei;
+        try {
+          amountBN = BigInt(amount); // Ensure it's an integer
+          pricePerShareBN = ethers.parseUnits(pricePerShare.toString(), "wei");
+          totalPriceWei = pricePerShareBN * amountBN;
+        } catch (err) {
+          console.error("Error converting to BigInt:", err);
+          toast.error("Error processing input values");
+          setLoading(false);
+          return false;
+        }
 
-        console.log("Property ID:", propertyId);
-        console.log("Amount:", amountBN.toString());
-        console.log("Price per share (ETH):", pricePerShare);
+        console.log("Amount (BN):", amountBN.toString());
         console.log("Price per share (Wei):", pricePerShareBN.toString());
         console.log("Total Price (Wei):", totalPriceWei.toString());
 
-        // Estimate gas before sending the transaction
-        const gasEstimate = await contract.estimateGas.buyTokenShares(propertyId, amountBN, {
-          value: totalPriceWei,
-        });
-
-        // Add a 20% buffer to the gas estimate
-        const gasLimit = gasEstimate.mul(120).div(100);
-
+       
         // Proceed with the transaction
         const tx = await contract.buyTokenShares(propertyId, amountBN, {
           value: totalPriceWei,
-          gasLimit: gasLimit,
         });
 
         const receipt = await tx.wait();
@@ -92,4 +101,4 @@ const useBuyTokens = () => {
   return { buyTokens, loading, error };
 };
 
-export default useBuyTokens;
+export default useBuyTokens
