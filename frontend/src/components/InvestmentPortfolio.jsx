@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 import {
   BarChart,
   Bar,
@@ -12,162 +13,200 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-} from "recharts";
-import useAllProperties from "../hooks/useAllProperties";
+} from "recharts"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import useAllProperties from "../hooks/useAllProperties"
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"]
 
 const InvestmentPortfolio = () => {
-  const { properties, loading, error } = useAllProperties();
-  const [portfolio, setPortfolio] = useState([]);
-  const [rentalLogs, setRentalLogs] = useState([]);
+  const { properties, loading, error } = useAllProperties()
+  const [portfolio, setPortfolio] = useState([])
+  const [rentalLogs, setRentalLogs] = useState([])
   const [summary, setSummary] = useState({
     totalProperties: 0,
     activeTokens: 0,
     totalValueLocked: 0,
     monthlyIncome: 0,
-  });
+  })
 
   useEffect(() => {
     if (Array.isArray(properties)) {
-      setPortfolio(properties);
+      setPortfolio(properties)
 
-      const totalProperties = properties.length;
-      const activeTokens = properties.reduce(
-        (acc, property) => acc + Number(property.totalShares || 0),
-        0
-      );
+      const totalProperties = properties.length
+      const activeTokens = properties.reduce((acc, property) => acc + Number(property.totalShares || 0), 0)
       const totalValueLocked = properties.reduce(
-        (acc, property) =>
-          acc + Number(property.totalShares || 0) * parseFloat(property.pricePerShare || 0),
-        0
-      );
+        (acc, property) => acc + Number(property.totalShares || 0) * Number.parseFloat(property.pricePerShare || 0),
+        0,
+      )
       const monthlyIncome = properties.reduce(
         (acc, property) =>
           acc + Number(property.accumulatedRentalIncomePerShare || 0) * Number(property.totalShares || 0),
-        0
-      );
+        0,
+      )
 
       setSummary({
         totalProperties,
         activeTokens,
         totalValueLocked,
         monthlyIncome,
-      });
+      })
 
       const rentalIncomeData = properties.map((property) => ({
         id: property.id,
         name: property.name,
         rentalIncomeLogs: property.rentalIncomeLogs || [],
-      }));
-      setRentalLogs(rentalIncomeData);
+      }))
+      setRentalLogs(rentalIncomeData)
     }
-  }, [properties]);
+  }, [properties])
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="ml-4 text-xl font-medium text-blue-600">Loading properties...</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
+        {[...Array(4)].map((_, index) => (
+          <Card key={index}>
+            <CardHeader className="space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-500">
+                <Skeleton className="h-4 w-[150px]" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-12 w-[200px]" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
-    );
+    )
   }
 
   if (error) {
-    return <p>Error loading properties: {error}</p>;
+    return (
+      <Card className="bg-red-100 text-red-800 p-6">
+        <CardTitle className="text-xl mb-2">Error</CardTitle>
+        <CardContent>
+          <p>Error loading properties: {error}</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   const barChartData = portfolio.map((property) => ({
     name: property.name,
     value: Number(property.totalShares),
-  }));
+  }))
 
   const pieChartData = portfolio.map((property) => ({
     name: property.name,
     value: Number(property.pricePerShare),
-  }));
+  }))
 
   const lineChartData = portfolio.map((property, index) => ({
     name: `Property ${index + 1}`,
     value: Number(property.accumulatedRentalIncomePerShare || 0),
-  }));
+  }))
 
   return (
-    <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
+    <div className="p-6 space-y-8 bg-white min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">Investment Portfolio</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { title: "Total Properties", value: summary.totalProperties },
-          { title: "Active Tokens", value: summary.activeTokens.toLocaleString() },
-          { title: "Total Value Locked", value: `$${summary.totalValueLocked.toFixed(2)}ETH` },
-          { title: "Monthly Rental Income", value: `$${summary.monthlyIncome.toFixed(2)}ETH` },
+          { title: "Total Properties", value: summary.totalProperties, color: "bg-green-500" },
+          { title: "Active Tokens", value: summary.activeTokens.toLocaleString(), color: "bg-blue-500" },
+          { title: "Total Value Locked", value: `${summary.totalValueLocked.toFixed(2)} ETH`, color: "bg-yellow-500" },
+          { title: "Monthly Rental Income", value: `${summary.monthlyIncome.toFixed(2)} ETH`, color: "bg-red-500" },
         ].map((item, index) => (
-          <div
+          <motion.div
             key={index}
-            className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
           >
-            <h3 className="text-xl font-semibold text-gray-700">{item.title}</h3>
-            <p className="text-4xl font-bold text-blue-600 mt-2">{item.value}</p>
-          </div>
+            <Card>
+              <CardHeader className="space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">{item.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-800">{item.value}</div>
+                <div className={`h-2 w-full mt-2 rounded-full ${item.color}`} />
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Token Distribution</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#3B82F6" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-gray-800">Token Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="name" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" />
+                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb" }} />
+                  <Bar dataKey="value" fill="#3B82F6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Property Value Distribution</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieChartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {pieChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-gray-800">Property Value Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieChartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {pieChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb" }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="bg-white shadow-lg rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">Rental Income Trend</h3>
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={lineChartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-gray-800">Rental Income Trend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={lineChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="name" stroke="#6b7280" />
+                <YAxis stroke="#6b7280" />
+                <Tooltip contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb" }} />
+                <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  );
-};
+  )
+}
 
-export default InvestmentPortfolio;
+export default InvestmentPortfolio
+

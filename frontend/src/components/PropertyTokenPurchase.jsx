@@ -198,4 +198,3 @@ const PropertyTokenPurchase = () => {
 }
 
 export default PropertyTokenPurchase
-

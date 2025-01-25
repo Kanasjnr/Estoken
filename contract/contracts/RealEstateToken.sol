@@ -29,6 +29,8 @@ contract RealEstateToken is ERC1155 {
 
     address public admin;
 
+    uint256 public constant FIXED_RENTAL_INCOME_PER_SHARE = 0.003 ether; // 0.003 ETH per share
+
     event PropertyTokenized(uint256 indexed propertyId, string name, string location, uint256 totalShares, uint256 pricePerShare);
     event PropertyUpdated(uint256 indexed propertyId, string name, string location, string description, uint256 pricePerShare, bool isActive);
     event RentalIncomeUpdated(uint256 indexed propertyId, uint256 totalRentalIncome);
@@ -68,7 +70,7 @@ contract RealEstateToken is ERC1155 {
         });
 
         _propertyFinancials[newPropertyId] = PropertyFinancials({
-            accumulatedRentalIncomePerShare: 0,
+            accumulatedRentalIncomePerShare: FIXED_RENTAL_INCOME_PER_SHARE,
             lastRentalUpdate: block.timestamp,
             isActive: true
         });
@@ -115,8 +117,6 @@ contract RealEstateToken is ERC1155 {
         uint256 totalPrice = amount * propertyInfo.pricePerShare;
         require(msg.value >= totalPrice, "Insufficient funds sent");
 
-        _settleRentalIncome(propertyId, msg.sender);
-
         _safeTransferFrom(admin, msg.sender, propertyId, amount, "");
         _availableShares[propertyId] -= amount;
 
@@ -129,31 +129,26 @@ contract RealEstateToken is ERC1155 {
         emit TokenSharesPurchased(propertyId, msg.sender, amount, totalPrice);
     }
 
-    function updateRentalIncome(uint256 propertyId, uint256 newRentalIncome) public onlyAdmin {
+    function updateRentalIncome(uint256 propertyId) public onlyAdmin {
         require(_propertyExists(propertyId), "Property does not exist");
 
-        PropertyInfo storage propertyInfo = _propertyInfo[propertyId];
         PropertyFinancials storage propertyFinancials = _propertyFinancials[propertyId];
 
-        uint256 incomePerShare = newRentalIncome / propertyInfo.totalShares;
-        propertyFinancials.accumulatedRentalIncomePerShare += incomePerShare;
+        // Set the fixed rental income per share
+        propertyFinancials.accumulatedRentalIncomePerShare = FIXED_RENTAL_INCOME_PER_SHARE;
         propertyFinancials.lastRentalUpdate = block.timestamp;
 
-        emit RentalIncomeUpdated(propertyId, newRentalIncome);
+        emit RentalIncomeUpdated(propertyId, FIXED_RENTAL_INCOME_PER_SHARE);
     }
 
     function claimRentalIncome(uint256 propertyId) public {
         require(_propertyExists(propertyId), "Property does not exist");
 
-        PropertyInfo storage propertyInfo = _propertyInfo[propertyId];
         PropertyFinancials storage propertyFinancials = _propertyFinancials[propertyId];
 
-        uint256 userShares = balanceOf(msg.sender, propertyId);
-        require(userShares > 0, "You don't own any shares of this property");
-
         uint256 lastClaim = _lastClaimTimestamp[propertyId][msg.sender];
-        uint256 accumulatedIncome = propertyFinancials.accumulatedRentalIncomePerShare * userShares;
-        uint256 claimableIncome = accumulatedIncome - (lastClaim * userShares);
+        uint256 accumulatedIncome = propertyFinancials.accumulatedRentalIncomePerShare;
+        uint256 claimableIncome = accumulatedIncome - (lastClaim);
 
         require(claimableIncome > 0, "No rental income to claim");
 
@@ -189,24 +184,4 @@ contract RealEstateToken is ERC1155 {
     function _propertyExists(uint256 propertyId) internal view returns (bool) {
         return propertyId > 0 && propertyId < _nextPropertyId;
     }
-
-    function _settleRentalIncome(uint256 propertyId, address account) internal {
-        PropertyFinancials storage propertyFinancials = _propertyFinancials[propertyId];
-        uint256 userShares = balanceOf(account, propertyId);
-        uint256 lastClaim = _lastClaimTimestamp[propertyId][account];
-        uint256 accumulatedIncome = propertyFinancials.accumulatedRentalIncomePerShare * userShares;
-        uint256 claimableIncome = accumulatedIncome - (lastClaim * userShares);
-
-        if (claimableIncome > 0) {
-            uint256 platformFee = (claimableIncome * PLATFORM_FEE_PERCENTAGE) / 100;
-            uint256 payout = claimableIncome - platformFee;
-
-            _lastClaimTimestamp[propertyId][account] = propertyFinancials.accumulatedRentalIncomePerShare;
-
-            payable(account).transfer(payout);
-
-            emit RentalIncomeClaimed(propertyId, account, payout);
-        }
-    }
 }
-

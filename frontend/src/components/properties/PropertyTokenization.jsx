@@ -1,15 +1,18 @@
-import  { useState } from 'react';
-import { useESToken } from '../../context/ESTokenContext';
-import useTokenizeProperty from '../../hooks/useTokenizeProperty';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useESToken } from '@/context/ESTokenContext';
+import useTokenizeProperty from '@/hooks/useTokenizeProperty';
 import { toast } from 'react-toastify';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Upload, ImageIcon, DollarSign, Hash, MapPin } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
+import { Loader2, Upload, ImageIcon, DollarSign, Hash, MapPin, Info, X } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 const PropertyTokenization = () => {
   const { isInitialized } = useESToken();
@@ -79,6 +82,13 @@ const PropertyTokenization = () => {
     }
   };
 
+  const handleRemoveImage = (index) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      imageUrls: prevState.imageUrls.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isInitialized) {
@@ -117,147 +127,197 @@ const PropertyTokenization = () => {
   };
 
   return (
-    <Card className="max-w-4xl mx-auto mt-10 overflow-hidden">
-      <CardHeader className="bg-purple-500 text-white">
-        <CardTitle className="text-3xl font-bold">Tokenize Your Property</CardTitle>
-        <CardDescription className="text-white/80">Transform your real estate into digital assets</CardDescription>
-      </CardHeader>
-      <CardContent className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-lg font-semibold">Property Name</Label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                className="text-lg"
-                placeholder="Luxurious Downtown Condo"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="location" className="text-lg font-semibold">Location</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
-                  id="location"
-                  name="location"
-                  value={formData.location}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="max-w-4xl mx-auto mt-10 bg-gray-900 text-white border-none shadow-2xl">
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 p-8">
+          <CardTitle className="text-4xl font-bold mb-2">Tokenize Your Property</CardTitle>
+          <CardDescription className="text-xl text-gray-200">Transform your real estate into digital assets</CardDescription>
+        </CardHeader>
+        <CardContent className="p-8">
+          <ScrollArea className="h-[60vh] pr-4">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-lg font-semibold text-gray-300">Property Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    className="text-lg bg-gray-800 border-gray-700 focus:border-blue-500 text-white"
+                    placeholder="Luxurious Downtown Condo"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="text-lg font-semibold text-gray-300">Location</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <Input
+                      id="location"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      required
+                      className="text-lg pl-10 bg-gray-800 border-gray-700 focus:border-blue-500 text-white"
+                      placeholder="123 Crypto Street, Blockchain City"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-lg font-semibold text-gray-300">Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
                   onChange={handleInputChange}
                   required
-                  className="text-lg pl-10"
-                  placeholder="123 Crypto Street, Blockchain City"
+                  rows={4}
+                  className="text-lg bg-gray-800 border-gray-700 focus:border-blue-500 text-white"
+                  placeholder="Describe your property in detail..."
                 />
               </div>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-lg font-semibold">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              required
-              rows={4}
-              className="text-lg"
-              placeholder="Describe your property in detail..."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="images" className="text-lg font-semibold">Property Images</Label>
-            <div className="flex items-center space-x-2">
-              <div className="relative flex-1">
-                <Input
-                  id="images"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  disabled={uploading}
-                  className="text-lg"
+              <div className="space-y-4">
+                <Label htmlFor="images" className="text-lg font-semibold text-gray-300">Property Images</Label>
+                <div className="flex items-center space-x-4">
+                  <div className="relative flex-1">
+                    <Input
+                      id="images"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                      className="text-lg bg-gray-800 border-gray-700 focus:border-blue-500 text-white"
+                    />
+                    <ImageIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  </div>
+                  {uploading && <Loader2 className="animate-spin text-blue-500" />}
+                </div>
+                {uploading && (
+                  <Progress value={uploadProgress} className="w-full mt-2" />
+                )}
+                {formData.imageUrls.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                    {formData.imageUrls.map((url, index) => (
+                      <div key={index} className="relative group">
+                        <img src={url || "/placeholder.svg"} alt={`Uploaded ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index)}
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="advanced-mode"
+                  checked={advancedMode}
+                  onCheckedChange={setAdvancedMode}
                 />
-                <ImageIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Label htmlFor="advanced-mode" className="text-lg font-semibold text-gray-300">Advanced Mode</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-gray-400 cursor-pointer" />
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-800 text-white">
+                      <p>Enable to set custom share details</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
-              {uploading && <Loader2 className="animate-spin text-purple-500" />}
-            </div>
-            {uploading && (
-              <Progress value={uploadProgress} className="w-full mt-2" />
-            )}
-            {formData.imageUrls.length > 0 && (
-              <div className="mt-2 text-sm text-muted-foreground">
-                {formData.imageUrls.length} image(s) uploaded
-              </div>
-            )}
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="advanced-mode"
-              checked={advancedMode}
-              onCheckedChange={setAdvancedMode}
-            />
-            <Label htmlFor="advanced-mode" className="text-lg font-semibold">Advanced Mode</Label>
-          </div>
-          {advancedMode && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="totalShares" className="text-lg font-semibold">Total Shares</Label>
-                <div className="relative">
-                  <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input
-                    id="totalShares"
-                    name="totalShares"
-                    type="number"
-                    value={formData.totalShares}
-                    onChange={handleInputChange}
-                    required
-                    className="text-lg pl-10"
-                    placeholder="1000"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pricePerShare" className="text-lg font-semibold">Price Per Share (ETH)</Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input
-                    id="pricePerShare"
-                    name="pricePerShare"
-                    type="number"
-                    step="0.000001"
-                    value={formData.pricePerShare}
-                    onChange={handleInputChange}
-                    required
-                    className="text-lg pl-10"
-                    placeholder="0.01"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+              <AnimatePresence>
+                {advancedMode && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-hidden"
+                  >
+                    <div className="space-y-2">
+                      <Label htmlFor="totalShares" className="text-lg font-semibold text-gray-300">Total Shares</Label>
+                      <div className="relative">
+                        <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <Input
+                          id="totalShares"
+                          name="totalShares"
+                          type="number"
+                          value={formData.totalShares}
+                          onChange={handleInputChange}
+                          required
+                          className="text-lg pl-10 bg-gray-800 border-gray-700 focus:border-blue-500 text-white"
+                          placeholder="1000"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="pricePerShare" className="text-lg font-semibold text-gray-300">Price Per Share (ETH)</Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <Input
+                          id="pricePerShare"
+                          name="pricePerShare"
+                          type="number"
+                          step="0.000001"
+                          value={formData.pricePerShare}
+                          onChange={handleInputChange}
+                          required
+                          className="text-lg pl-10 bg-gray-800 border-gray-700 focus:border-blue-500 text-white"
+                          placeholder="0.01"
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </form>
+          </ScrollArea>
+        </CardContent>
+        <CardFooter className="bg-gray-800 p-8">
           <Button
             type="submit"
+            onClick={handleSubmit}
             disabled={loading || uploading}
-            className="w-full text-lg py-6 bg-purple-500  hover:from-purple-600 hover:to-pink-600 transition-all duration-300"
+            className="w-full text-lg py-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white transition-all duration-300 transform hover:scale-105"
           >
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                 Tokenizing Property...
               </>
             ) : (
               <>
-                <Upload className="mr-2 h-5 w-5" />
+                <Upload className="mr-2 h-6 w-6" />
                 Tokenize Property
               </>
             )}
           </Button>
-        </form>
-        {error && <p className="text-red-500 mt-4">{error}</p>}
-      </CardContent>
-    </Card>
+        </CardFooter>
+      </Card>
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="max-w-4xl mx-auto mt-4 p-4 bg-red-900 border-l-4 border-red-500 text-white rounded-lg"
+        >
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
+        </motion.div>
+      )}
+    </motion.div>
   );
 };
 
