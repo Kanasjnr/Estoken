@@ -381,6 +381,19 @@
   },
   {
     "inputs": [],
+    "name": "FIXED_RENTAL_INCOME_PER_SHARE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "PLATFORM_FEE_PERCENTAGE",
     "outputs": [
       {
@@ -811,11 +824,6 @@
       {
         "internalType": "uint256",
         "name": "propertyId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newRentalIncome",
         "type": "uint256"
       }
     ],

@@ -1,17 +1,32 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { formatEther } from "ethers";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ethers } from "ethers";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAppKitAccount } from "@reown/appkit/react";
 import useClaimRentalIncome from "../hooks/useClaimRentalIncome";
 import useAllProperties from "../hooks/useAllProperties";
 
 export function RentalIncome() {
   const [rentalIncomes, setRentalIncomes] = useState([]);
+  const [claimError, setClaimError] = useState(null);
   const { address, isConnected } = useAppKitAccount();
-  const { claimRentalIncome, loading } = useClaimRentalIncome();
+  const { claimRentalIncome, loading: claimLoading } = useClaimRentalIncome();
   const { properties, loading: propertiesLoading, error: propertiesError } = useAllProperties();
 
   useEffect(() => {
@@ -21,8 +36,10 @@ export function RentalIncome() {
   
         let amount = "0.0";
         try {
-          if (accumulatedIncome) {
-            amount = formatEther(BigInt(accumulatedIncome));
+          if (accumulatedIncome && accumulatedIncome !== "0") {
+            // Parse the accumulated income as a BigNumber
+            const bigNumberIncome = ethers.parseUnits(accumulatedIncome.toString(), 18); // Ensure input is a string
+            amount = ethers.formatUnits(bigNumberIncome, 18); // Format the BigNumber for display
           }
         } catch (error) {
           console.warn(`Invalid accumulated income for property ${property.id}:`, error);
@@ -31,7 +48,7 @@ export function RentalIncome() {
         let lastUpdate = "N/A";
         if (property.lastRentalUpdate) {
           try {
-            const timestamp = parseInt(property.lastRentalUpdate, 10);
+            const timestamp = Number(property.lastRentalUpdate);
             if (!isNaN(timestamp)) {
               lastUpdate = new Date(timestamp * 1000).toLocaleString();
             }
@@ -58,6 +75,7 @@ export function RentalIncome() {
       toast.error("Please connect your wallet to claim rental income.");
       return;
     }
+    setClaimError(null);
     try {
       const success = await claimRentalIncome(propertyId);
       if (success) {
@@ -66,34 +84,53 @@ export function RentalIncome() {
       }
     } catch (err) {
       console.error("Error claiming rental income:", err);
-      toast.error("Error claiming rental income.");
+      setClaimError(`Error claiming rental income: ${err.message || err}`);
+      toast.error(`Error claiming rental income: ${err.message || err}`);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-3xl font-bold">Rental Income</h2>
+    <div className="space-y-6 p-6 bg-white min-h-screen">
+      <motion.h2
+        className="text-3xl font-bold text-gray-800"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        Rental Income
+      </motion.h2>
       <Card>
         <CardHeader>
-          <CardTitle>Your Rental Incomes</CardTitle>
+          <CardTitle className="text-xl text-gray-800">Your Rental Incomes</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Property</TableHead>
-                <TableHead>Amount (ETH)</TableHead>
-                <TableHead>Last Update</TableHead>
-                <TableHead>Action</TableHead>
+                <TableHead className="text-gray-600">Property</TableHead>
+                <TableHead className="text-gray-600">Amount (ETH)</TableHead>
+                <TableHead className="text-gray-600">Last Update</TableHead>
+                <TableHead className="text-gray-600">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {propertiesLoading ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center">
-                    Loading rental incomes...
-                  </TableCell>
-                </TableRow>
+                [...Array(3)].map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[200px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[100px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[150px]" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-8 w-[100px]" />
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : propertiesError ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-red-500">
@@ -101,32 +138,43 @@ export function RentalIncome() {
                   </TableCell>
                 </TableRow>
               ) : rentalIncomes.length > 0 ? (
-                rentalIncomes.map((income) => (
-                  <TableRow key={income.id}>
-                    <TableCell>{income.propertyName}</TableCell>
-                    <TableCell>{income.amount}</TableCell>
-                    <TableCell>{income.lastUpdate}</TableCell>
+                rentalIncomes.map((income, index) => (
+                  <motion.tr
+                    key={income.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <TableCell className="font-medium text-gray-800">{income.propertyName}</TableCell>
+                    <TableCell className="text-gray-600">{Number.parseFloat(income.amount).toFixed(6)} ETH</TableCell>
+                    <TableCell className="text-gray-600">{income.lastUpdate}</TableCell>
                     <TableCell>
                       <Button
                         onClick={() => handleClaim(income.propertyId)}
-                        disabled={loading}
+                        disabled={claimLoading}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
-                        {loading ? "Claiming..." : "Claim"}
+                        {claimLoading ? "Claiming..." : "Claim"}
                       </Button>
                     </TableCell>
-                  </TableRow>
+                  </motion.tr>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">
+                  <TableCell colSpan={4} className="text-center text-gray-600">
                     No rental incomes found.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+          {claimError && (
+            <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">{claimError}</div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
+
+export default RentalIncome;
