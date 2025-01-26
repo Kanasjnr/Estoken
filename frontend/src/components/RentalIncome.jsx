@@ -1,93 +1,79 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { toast } from "react-toastify";
-import { ethers } from "ethers";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useAppKitAccount } from "@reown/appkit/react";
-import useClaimRentalIncome from "../hooks/useClaimRentalIncome";
-import useAllProperties from "../hooks/useAllProperties";
+import React, { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { toast } from "react-toastify"
+import { ethers } from "ethers"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useAppKitAccount } from "@reown/appkit/react"
+import useClaimRentalIncome from "../hooks/useClaimRentalIncome"
+import useAllProperties from "../hooks/useAllProperties"
 
 export function RentalIncome() {
-  const [rentalIncomes, setRentalIncomes] = useState([]);
-  const [claimError, setClaimError] = useState(null);
-  const { address, isConnected } = useAppKitAccount();
-  const { claimRentalIncome, loading: claimLoading } = useClaimRentalIncome();
-  const { properties, loading: propertiesLoading, error: propertiesError } = useAllProperties();
+  const [rentalIncomes, setRentalIncomes] = useState([])
+  const [claimError, setClaimError] = useState(null)
+  const { address, isConnected } = useAppKitAccount()
+  const { claimRentalIncome, loading: claimLoading } = useClaimRentalIncome()
+  const { properties, loading: propertiesLoading, error: propertiesError } = useAllProperties()
 
   useEffect(() => {
     if (properties.length > 0) {
       const incomeData = properties.map((property) => {
-        const accumulatedIncome = property.accumulatedRentalIncomePerShare;
-  
-        let amount = "0.0";
+        const accumulatedIncome = property.accumulatedRentalIncomePerShare
+
+        let amount = "0.0"
         try {
           if (accumulatedIncome && accumulatedIncome !== "0") {
-            // Parse the accumulated income as a BigNumber
-            const bigNumberIncome = ethers.parseUnits(accumulatedIncome.toString(), 18); // Ensure input is a string
-            amount = ethers.formatUnits(bigNumberIncome, 18); // Format the BigNumber for display
+            const bigNumberIncome = ethers.parseUnits(accumulatedIncome.toString(), 18)
+            amount = ethers.formatUnits(bigNumberIncome, 18)
           }
         } catch (error) {
-          console.warn(`Invalid accumulated income for property ${property.id}:`, error);
+          console.warn(`Invalid accumulated income for property ${property.id}:`, error)
         }
-  
-        let lastUpdate = "N/A";
+
+        let lastUpdate = "N/A"
         if (property.lastRentalUpdate) {
           try {
-            const timestamp = Number(property.lastRentalUpdate);
+            const timestamp = Number(property.lastRentalUpdate)
             if (!isNaN(timestamp)) {
-              lastUpdate = new Date(timestamp * 1000).toLocaleString();
+              lastUpdate = new Date(timestamp * 1000).toLocaleString()
             }
           } catch (error) {
-            console.warn(`Invalid date for property ${property.id}:`, error);
+            console.warn(`Invalid date for property ${property.id}:`, error)
           }
         }
-  
+
         return {
           id: property.id,
           propertyId: property.id,
           propertyName: property.name,
           amount,
           lastUpdate,
-        };
-      });
-      setRentalIncomes(incomeData);
+        }
+      })
+      setRentalIncomes(incomeData)
     }
-  }, [properties]);
-  
+  }, [properties])
 
   const handleClaim = async (propertyId) => {
     if (!isConnected) {
-      toast.error("Please connect your wallet to claim rental income.");
-      return;
+      toast.error("Please connect your wallet to claim rental income.")
+      return
     }
-    setClaimError(null);
+    setClaimError(null)
     try {
-      const success = await claimRentalIncome(propertyId);
+      const success = await claimRentalIncome(propertyId)
       if (success) {
-        toast.success("Rental income claimed successfully!");
         // Optionally refresh rental income data here
+        // For example, you could call a function to update the rental incomes
+        // updateRentalIncomes();
       }
     } catch (err) {
-      console.error("Error claiming rental income:", err);
-      setClaimError(`Error claiming rental income: ${err.message || err}`);
-      toast.error(`Error claiming rental income: ${err.message || err}`);
+      console.error("Error claiming rental income:", err)
+      setClaimError(`Error claiming rental income: ${err.message || err}`)
     }
-  };
+  }
 
   return (
     <div className="space-y-6 p-6 bg-white min-h-screen">
@@ -174,7 +160,8 @@ export function RentalIncome() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
 
-export default RentalIncome;
+export default RentalIncome
+
