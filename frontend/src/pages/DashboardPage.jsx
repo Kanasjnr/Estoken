@@ -23,6 +23,7 @@ export function DashboardPage() {
             <Route path="/marketplace" element={<PropertyTokenPurchase />} />
             <Route path="/portfolio" element={<InvestmentPortfolio />} />
             <Route path="/rental" element={<RentalIncome />} />
+            
           </Routes>
         </main>
       </div>
