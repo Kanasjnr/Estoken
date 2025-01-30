@@ -8,6 +8,7 @@ import RentalIncome from "./RentalIncome";
 import Marketplace from "./Marketplace";
 import Notifications from "./Notifications";
 
+
 function Dashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
 
