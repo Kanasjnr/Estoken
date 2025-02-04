@@ -1,11 +1,11 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
-import Header from "./Header";
+import Header from "../Header";
 import DashboardContent from "./DashboardContent";
 import PropertyListing from "./PropertyListing";
 import PropertyTokenization from "./PropertyTokenization";
-import RentalIncome from "./RentalIncome";
-import Marketplace from "./Marketplace";
+import RentalIncome from "../RentalIncome";
+import Marketplace from "../Marketplace";
 import Notifications from "./Notifications";
 
 

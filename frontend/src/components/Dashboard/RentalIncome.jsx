@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { toast } from "react-toastify"
 import { ethers } from "ethers"
@@ -7,13 +7,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAppKitAccount } from "@reown/appkit/react"
-import useClaimRentalIncome from "../hooks/useClaimRentalIncome"
-import useAllProperties from "../hooks/useAllProperties"
+import useClaimRentalIncome from "../../hooks/useClaimRentalIncome"
+import useAllProperties from "../../hooks/useAllProperties"
 
 export function RentalIncome() {
   const [rentalIncomes, setRentalIncomes] = useState([])
   const [claimError, setClaimError] = useState(null)
-  const { address, isConnected } = useAppKitAccount()
+  const {  isConnected } = useAppKitAccount()
   const { claimRentalIncome, loading: claimLoading } = useClaimRentalIncome()
   const { properties, loading: propertiesLoading, error: propertiesError } = useAllProperties()
 

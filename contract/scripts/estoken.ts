@@ -1,54 +1,44 @@
-import { ethers, run } from "hardhat";
+import { ethers } from "hardhat"
+import type { Contract } from "ethers"
 
-async function deployAndVerify(
-  contractName: string,
-  constructorArgs: any[] = []
-) {
-  try {
-    console.log(`Deploying ${contractName}...`);
-    const ContractFactory = await ethers.getContractFactory(contractName);
-    const contract = await ContractFactory.deploy(...constructorArgs);
-    await contract.waitForDeployment(); // Wait for deployment to be mined
-    console.log(`${contractName} deployed to: ${contract.target}`);
+async function deployAndVerify(contractName: string, constructorArguments: any[] = []): Promise<Contract> {
+  console.log(`Deploying ${contractName}...`)
+  const ContractFactory = await ethers.getContractFactory(contractName)
+  const contract = await ContractFactory.deploy(...constructorArguments)
+  await contract.waitForDeployment()
+  console.log(`${contractName} deployed to: ${contract.target}`)
 
-    // Verify the contract after deployment
-    await verifyContract(contract.target, constructorArgs);
-
-    return contract;
-  } catch (error) {
-    console.error(`Error deploying or verifying ${contractName}:`, error);
-    throw error;
-  }
-}
-
-async function verifyContract(address: string, constructorArgs: any[]) {
-  console.log("Verifying contract...");
   try {
     await run("verify:verify", {
-      address,
-      constructorArguments: constructorArgs,
-    });
-    console.log("Contract verified successfully!");
+      address: contract.target,
+      constructorArguments: constructorArguments,
+    })
   } catch (error) {
-    console.error("Contract verification failed:", error);
+    console.log(`Error deploying or verifying ${contractName}:`, error)
   }
+  return contract
 }
 
 async function main() {
   try {
-    // Deploy RealEstateToken contract
-    const realEstateToken = await deployAndVerify("RealEstateToken");
+    // Deploy KYCManager contract
+    const kycManager = await deployAndVerify("KYCManager")
+    console.log("KYCManager contract deployed and verified successfully!")
+    console.log("KYCManager address:", kycManager.target)
 
-    console.log("RealEstateToken contract deployed and verified successfully!");
-    console.log("Contract address:", realEstateToken.target);
+    // Deploy RealEstateToken contract with KYCManager address
+    const realEstateToken = await deployAndVerify("RealEstateToken", [kycManager.target])
+    console.log("RealEstateToken contract deployed and verified successfully!")
+    console.log("RealEstateToken address:", realEstateToken.target)
   } catch (error) {
-    console.error("Deployment or verification failed:", error);
-    process.exitCode = 1;
+    console.error("Deployment or verification failed:", error)
+    process.exitCode = 1
   }
 }
 
-// Execute the deployment script
+// We recommend this pattern to be able to use async/await everywhere
+// and properly handle errors.
 main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+  console.error(error)
+  process.exitCode = 1
+})

@@ -2,17 +2,17 @@ import { useState, useCallback } from "react"
 import { toast } from "react-toastify"
 import { useAppKitAccount } from "@reown/appkit/react"
 import useContract from "./useContract"
-import ABI from "../abis/RealEstateToken.json"
+import ABI from "../abis/KYCManager.json"
 
-const useClaimRentalIncome = () => {
+const useGetUserKYCDetails = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const { address, isConnected } = useAppKitAccount()
-  const contractAddress = import.meta.env.VITE_APP_REAL_ESTATE_TOKEN_ADDRESS
+  const contractAddress = import.meta.env.VITE_APP_KYC_MANAGER_ADDRESS
   const { contract } = useContract(contractAddress, ABI)
 
-  const claimRentalIncome = useCallback(
-    async (propertyId) => {
+  const getUserKYCDetails = useCallback(
+    async (userAddress) => {
       if (!address || !isConnected) {
         toast.error("Please connect your wallet")
         return
@@ -27,17 +27,17 @@ const useClaimRentalIncome = () => {
       setError(null)
 
       try {
-        const tx = await contract.claimRentalIncome(propertyId)
-        const receipt = await tx.wait()
-
-        if (receipt.status === 1) {
-          toast.success("Rental income claimed successfully!")
-          return receipt.transactionHash
-        } else {
-          throw new Error("Transaction failed")
+        const details = await contract.getUserKYCDetails(userAddress)
+        return {
+          name: details[0],
+          email: details[1],
+          nationality: details[2],
+          idNumber: details[3],
+          idImage: details[4],
+          isVerified: details[5],
         }
       } catch (err) {
-        console.error("Error claiming rental income:", err)
+        console.error("Error getting user KYC details:", err)
         toast.error(`Error: ${err.message || "An unknown error occurred."}`)
         setError(err.message)
         throw err
@@ -48,7 +48,7 @@ const useClaimRentalIncome = () => {
     [address, isConnected, contract],
   )
 
-  return { claimRentalIncome, loading, error }
+  return { getUserKYCDetails, loading, error }
 }
 
-export default useClaimRentalIncome
+export default useGetUserKYCDetails

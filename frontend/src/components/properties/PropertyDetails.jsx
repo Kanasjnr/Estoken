@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import useGetProperty from "../../hooks/useGetProperty"
+import useGetProperty from "../../hooks/useUserProperties"
 import { formatEther } from "ethers"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
