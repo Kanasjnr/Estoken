@@ -1,18 +1,19 @@
 import { useState, useCallback } from "react"
 import { toast } from "react-toastify"
+import { ethers } from "ethers"
 import { useAppKitAccount } from "@reown/appkit/react"
 import useContract from "./useContract"
 import ABI from "../abis/RealEstateToken.json"
 
-const useClaimRentalIncome = () => {
+const useUpdatePropertyValuation = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const { address, isConnected } = useAppKitAccount()
   const contractAddress = import.meta.env.VITE_APP_REAL_ESTATE_TOKEN_ADDRESS
   const { contract } = useContract(contractAddress, ABI)
 
-  const claimRentalIncome = useCallback(
-    async (propertyId) => {
+  const updatePropertyValuation = useCallback(
+    async (propertyId, newValuation) => {
       if (!address || !isConnected) {
         toast.error("Please connect your wallet")
         return
@@ -27,17 +28,18 @@ const useClaimRentalIncome = () => {
       setError(null)
 
       try {
-        const tx = await contract.claimRentalIncome(propertyId)
+        const newValuationInWei = ethers.parseUnits(newValuation.toString(), "ether")
+        const tx = await contract.updatePropertyValuation(propertyId, newValuationInWei)
         const receipt = await tx.wait()
 
         if (receipt.status === 1) {
-          toast.success("Rental income claimed successfully!")
+          toast.success("Property valuation updated successfully!")
           return receipt.transactionHash
         } else {
           throw new Error("Transaction failed")
         }
       } catch (err) {
-        console.error("Error claiming rental income:", err)
+        console.error("Error updating property valuation:", err)
         toast.error(`Error: ${err.message || "An unknown error occurred."}`)
         setError(err.message)
         throw err
@@ -48,7 +50,7 @@ const useClaimRentalIncome = () => {
     [address, isConnected, contract],
   )
 
-  return { claimRentalIncome, loading, error }
+  return { updatePropertyValuation, loading, error }
 }
 
-export default useClaimRentalIncome
+export default useUpdatePropertyValuation

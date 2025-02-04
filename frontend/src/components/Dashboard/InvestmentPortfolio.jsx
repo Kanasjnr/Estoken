@@ -16,7 +16,7 @@ import {
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import useAllProperties from "../hooks/useAllProperties"
+import useAllProperties from "../../hooks/useAllProperties"
 
 const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"]
 
