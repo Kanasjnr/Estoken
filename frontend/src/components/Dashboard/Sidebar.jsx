@@ -1,16 +1,16 @@
-import React from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import React from "react"
+import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Building, Coins, BarChart2, ShoppingCart, Menu } from 'lucide-react'
+import { LayoutDashboard, Building, Coins, BarChart2, ShoppingCart, Menu, UserCheck } from "lucide-react"
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Building, label: 'Properties', path: '/dashboard/properties' },
-  { icon: Coins, label: 'Tokenization', path: '/dashboard/tokenization' },
-  { icon: BarChart2, label: 'Rental Income', path: '/dashboard/rental' },
-  { icon: ShoppingCart, label: 'Marketplace', path: '/dashboard/marketplace' },
-  // { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Building, label: "Properties", path: "/dashboard/properties" },
+  { icon: Coins, label: "Tokenization", path: "/dashboard/tokenization" },
+  { icon: BarChart2, label: "Rental Income", path: "/dashboard/rental" },
+  { icon: ShoppingCart, label: "Marketplace", path: "/dashboard/marketplace" },
+  { icon: UserCheck, label: "KYC", path: "/dashboard/kyc" },
 ]
 
 export function Sidebar() {
@@ -21,17 +21,14 @@ export function Sidebar() {
     <aside
       className={cn(
         "bg-gray-800 text-white shadow-lg transition-all duration-300 ease-in-out",
-        expanded ? "w-80" : "w-24"
+        expanded ? "w-80" : "w-24",
       )}
     >
       <div className="flex items-center justify-between px-6 py-5 border-b border-gray-700">
         <img
           src="/Logo.png"
           alt="Logo"
-          className={cn(
-            "h-12 transition-all duration-300",
-            expanded ? "opacity-100" : "opacity-100" 
-          )}
+          className={cn("h-12 transition-all duration-300", expanded ? "opacity-100" : "opacity-100")}
         />
         <Button
           variant="ghost"
@@ -43,7 +40,6 @@ export function Sidebar() {
         </Button>
       </div>
 
-   
       <nav className="mt-6">
         <ul className="space-y-2">
           {menuItems.map((item, index) => (
@@ -54,16 +50,11 @@ export function Sidebar() {
                   "flex items-center px-6 py-4 text-lg font-semibold rounded-lg transition-all duration-200",
                   location.pathname === item.path
                     ? "bg-gray-700 text-blue-400"
-                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                    : "text-gray-300 hover:bg-gray-700 hover:text-white",
                 )}
               >
                 <item.icon className="h-8 w-8" />
-                <span
-                  className={cn(
-                    "ml-6 transition-opacity duration-300",
-                    expanded ? "opacity-100" : "opacity-0"
-                  )}
-                >
+                <span className={cn("ml-6 transition-opacity duration-300", expanded ? "opacity-100" : "opacity-0")}>
                   {item.label}
                 </span>
               </Link>
@@ -71,8 +62,6 @@ export function Sidebar() {
           ))}
         </ul>
       </nav>
-
-      
     </aside>
   )
 }

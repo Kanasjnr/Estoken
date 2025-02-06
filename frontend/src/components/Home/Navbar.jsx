@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import useSignerOrProvider from "../hooks/useSignerOrProvider"; 
+import useSignerOrProvider from "../../hooks/useSignerOrProvider"; 
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);

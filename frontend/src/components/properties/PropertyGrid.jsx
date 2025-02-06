@@ -1,6 +1,6 @@
 import { PropertyCard } from './PropertyCard';
 import { PropertySearch } from './PropertySearch';
-import useAllProperties from '../../hooks/useAllProperties';
+import useAllProperties from '../../hooks/Properties/useAllProperties';
 
 const Loader = () => (
   <div className="flex justify-center items-center flex-col">
@@ -38,4 +38,3 @@ export function PropertyGrid() {
     </div>
   );
 }
-

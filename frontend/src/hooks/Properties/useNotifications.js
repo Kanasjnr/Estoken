@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from "react"
 import { toast } from "react-toastify"
 import { ethers } from "ethers"
 import { useAppKitAccount } from "@reown/appkit/react"
-import useSignerOrProvider from "./useSignerOrProvider"
-import ABI from "../abis/RealEstateToken.json"
+import useSignerOrProvider from "../useSignerOrProvider"
+import ABI from "../../abis/RealEstateToken.json"
 
 const useNotifications = () => {
   const [notifications, setNotifications] = useState([])

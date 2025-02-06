@@ -1,13 +1,11 @@
 import { useParams } from "react-router-dom"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import useGetProperty from "../../hooks/useGetProperty"
-import { formatEther } from "ethers"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import useGetProperty from "../../hooks/Properties/useGetProperty"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight, Home, MapPin, Coins, Users, Calendar } from "lucide-react"
+import { MapPin, Coins, DollarSign, TrendingUp, ArrowUpDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react"
+import { formatEther } from "ethers"
 
 const Loader = () => (
   <div className="flex justify-center items-center h-screen">
@@ -58,7 +56,14 @@ export function PropertyDetails() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden border border-gray-200 rounded-lg bg-white">
+        <CardHeader className="p-4 border-b border-gray-200">
+          <CardTitle className="text-3xl font-semibold text-gray-800">{property.name}</CardTitle>
+          <div className="flex items-center text-gray-500 mt-1">
+            <MapPin className="h-5 w-5 mr-2 text-primary" />
+            <span className="text-lg">{property.location}</span>
+          </div>
+        </CardHeader>
         <CardContent className="p-0">
           {/* Image Carousel */}
           <div className="relative aspect-video">
@@ -75,107 +80,107 @@ export function PropertyDetails() {
               />
             </AnimatePresence>
             <div className="absolute inset-0 flex items-center justify-between px-4">
-              <Button
-                variant="ghost"
-                size="icon"
+              <button
                 onClick={prevImage}
-                className="bg-black/30 hover:bg-black/50 text-white"
-                aria-label="Previous Image"
+                className="bg-black/40 hover:bg-black/60 text-white p-2 rounded-full transition-colors"
               >
                 <ChevronLeft className="h-6 w-6" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
+              </button>
+              <button
                 onClick={nextImage}
-                className="bg-black/30 hover:bg-black/50 text-white"
-                aria-label="Next Image"
+                className="bg-black/40 hover:bg-black/60 text-white p-2 rounded-full transition-colors"
               >
                 <ChevronRight className="h-6 w-6" />
-              </Button>
-            </div>
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {property.imageUrls.map((_, index) => (
-                <span
-                  key={index}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    index === currentImageIndex ? "bg-white scale-125" : "bg-white/50"
-                  }`}
-                />
-              ))}
+              </button>
             </div>
           </div>
 
-          {/* Property Details */}
-          <div className="p-6 space-y-6">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold">{property.name}</h1>
-              <div className="flex items-center text-muted-foreground">
-                <MapPin className="h-5 w-5 mr-2" />
-                <span>{property.location}</span>
+          {/* Property Description */}
+          <div className="p-4 border-b border-gray-200">
+            <p className="text-base text-gray-700">{property.description}</p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <Coins className="h-5 w-5 text-primary" />
+              <div className="ml-3">
+                <p className="text-sm text-gray-500">Total Shares</p>
+                <p className="text-lg font-medium text-gray-800">{property.totalShares}</p>
               </div>
             </div>
-
-            <Separator />
-
-            <p className="text-lg">{property.description}</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center space-x-4">
-                    <Home className="h-10 w-10 text-primary" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Shares</p>
-                      <p className="text-2xl font-bold">{property.totalShares}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center space-x-4">
-                    <Users className="h-10 w-10 text-primary" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Available Shares</p>
-                      <p className="text-2xl font-bold">{property.availableShares}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center space-x-4">
-                    <Coins className="h-10 w-10 text-primary" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Price Per Share</p>
-                      <p className="text-2xl font-bold">{formatEther(property.pricePerShare)} ETH</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center space-x-4">
-                    <Calendar className="h-10 w-10 text-primary" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Last Rental Update</p>
-                      <p className="text-lg font-semibold">{property.lastRentalUpdate}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <div className="ml-3">
+                <p className="text-sm text-gray-500">Available Shares</p>
+                <p className="text-lg font-medium text-gray-800">{property.availableShares}</p>
+              </div>
             </div>
-
-            <div className="flex justify-between items-center">
-              <Badge variant={property.isActive ? "default" : "secondary"} className="text-lg px-3 py-1">
-                {property.isActive ? "Active" : "Inactive"}
-              </Badge>
+            <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <DollarSign className="h-5 w-5 text-primary" />
+              <div className="ml-3">
+                <p className="text-sm text-gray-500">Price Per Share</p>
+                <p className="text-lg font-medium text-gray-800">{property.pricePerShare} ETH</p>
+              </div>
             </div>
+            <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <div className="ml-3">
+                <p className="text-sm text-gray-500">Initial Valuation</p>
+                <p className="text-lg font-medium text-gray-800">{property.initialValuation} ETH</p>
+              </div>
+            </div>
+            <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <ArrowUpDown className="h-5 w-5 text-primary" />
+              <div className="ml-3">
+                <p className="text-sm text-gray-500">Current Valuation</p>
+                <p className="text-lg font-medium text-gray-800">{property.currentValuation} ETH</p>
+              </div>
+            </div>
+            <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <DollarSign className="h-5 w-5 text-primary" />
+              <div className="ml-3">
+                <p className="text-sm text-gray-500">Accumulated Rental Income Per Share</p>
+                <p className="text-lg font-medium text-gray-800">{property.accumulatedRentalIncomePerShare} ETH</p>
+              </div>
+            </div>
+            <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <Calendar className="h-5 w-5 text-primary" />
+              <div className="ml-3">
+                <p className="text-sm text-gray-500">Last Rental Update</p>
+                <p className="text-lg font-medium text-gray-800">{property.lastRentalUpdate}</p>
+              </div>
+            </div>
+            <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <Calendar className="h-5 w-5 text-primary" />
+              <div className="ml-3">
+                <p className="text-sm text-gray-500">Creation Date</p>
+                <p className="text-lg font-medium text-gray-800">{property.creationTimestamp}</p>
+              </div>
+            </div>
+          </div>
+
+         {/* Monthly Rental Income */}
+         <div className="p-4 border-t border-gray-200">
+  <h3 className="text-xl font-semibold mb-3">Total Rental Income</h3>
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <p className="text-lg font-medium text-gray-800">0.09 ETH</p>
+  </div>
+</div>
+
+
+
+
+          <div className="p-4">
+            <Badge
+              variant={property.isActive ? "default" : "secondary"}
+              className="text-lg px-4 py-1 font-semibold rounded"
+            >
+              {property.isActive ? "Active" : "Inactive"}
+            </Badge>
           </div>
         </CardContent>
       </Card>
     </div>
   )
 }
-
