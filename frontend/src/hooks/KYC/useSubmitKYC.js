@@ -57,7 +57,7 @@ const useSubmitKYC = () => {
         }
       } catch (err) {
         console.error("Error submitting KYC:", err)
-        toast.error(`Error: ${err.message || "An unknown error occurred."}`)
+        // toast.error(`Error: ${err.message || "An unknown error occurred."}`)
         setError(err.message)
         throw err
       } finally {

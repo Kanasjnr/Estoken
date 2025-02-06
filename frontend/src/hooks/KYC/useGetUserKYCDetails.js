@@ -38,7 +38,7 @@ const useGetUserKYCDetails = () => {
         }
       } catch (err) {
         console.error("Error getting user KYC details:", err)
-        toast.error(`Error: ${err.message || "An unknown error occurred."}`)
+        // toast.error(`Error: ${err.message || "An unknown error occurred."}`)
         setError(err.message)
         throw err
       } finally {

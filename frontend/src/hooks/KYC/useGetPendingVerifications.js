@@ -34,7 +34,7 @@ const useGetPendingVerifications = () => {
       return pendingVerifications;
     } catch (err) {
       console.error("Error getting pending verifications:", err);
-      toast.error(`Error: ${err.message || "An unknown error occurred."}`);
+      // toast.error(`Error: ${err.message || "An unknown error occurred."}`);
       setError(err.message);
       throw err;
     } finally {

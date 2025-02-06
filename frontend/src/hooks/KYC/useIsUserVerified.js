@@ -24,7 +24,7 @@ const useIsUserVerified = () => {
         return isVerified
       } catch (err) {
         console.error("Error checking user verification:", err)
-        toast.error(`Error: ${err.message || "An unknown error occurred."}`)
+        // toast.error(`Error: ${err.message || "An unknown error occurred."}`)
         setError(err.message)
         throw err
       } finally {
