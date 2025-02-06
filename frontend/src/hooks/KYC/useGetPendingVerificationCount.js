@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react"
 import { toast } from "react-toastify"
-import useContract from "./useContract"
-import ABI from "../abis/KYCManager.json"
+import useContract from "../useContract"
+import ABI from "../../abis/KYCManager.json"
 
 const useGetPendingVerificationCount = () => {
   const [loading, setLoading] = useState(false)

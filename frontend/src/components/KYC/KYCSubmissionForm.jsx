@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useAppKitAccount } from "@reown/appkit/react"
-import useSubmitKYC from "../../hooks/useSubmitKYC"
+import useSubmitKYC from "../../hooks/KYC/useSubmitKYC"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"

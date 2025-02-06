@@ -120,4 +120,3 @@ export function PropertyCard({ property }) {
     </Card>
   )
 }
-

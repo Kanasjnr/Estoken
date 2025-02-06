@@ -1,79 +1,95 @@
-import { useState, useEffect } from "react"
+"use client"
+
+import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { motion } from "framer-motion"
 import { toast } from "react-toastify"
-import { ethers } from "ethers"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
 import { useAppKitAccount } from "@reown/appkit/react"
-import useClaimRentalIncome from "../../hooks/useClaimRentalIncome"
-import useAllProperties from "../../hooks/useAllProperties"
+import useClaimRentalIncome from "../../hooks/Properties/useClaimRentalIncome"
+import useAllProperties from "../../hooks/Properties/useAllProperties"
+import useCalculateRentalIncome from "../../hooks/Properties/useCalculateRentalIncome"
 
 export function RentalIncome() {
   const [rentalIncomes, setRentalIncomes] = useState([])
-  const [claimError, setClaimError] = useState(null)
-  const {  isConnected } = useAppKitAccount()
+  const { isConnected } = useAppKitAccount()
   const { claimRentalIncome, loading: claimLoading } = useClaimRentalIncome()
-  const { properties, loading: propertiesLoading, error: propertiesError } = useAllProperties()
+  const { calculateRentalIncome } = useCalculateRentalIncome()
+  const { getAllProperties, loading: propertiesLoading, propertiesError, properties } = useAllProperties()
+
+  const fetchProperties = useCallback(async () => {
+    try {
+      console.log("Fetching properties...")
+      await getAllProperties()
+    } catch (error) {
+      console.error("Error fetching properties:", error)
+      toast.error(`Error fetching properties: ${error.message}`)
+    }
+  }, [getAllProperties])
 
   useEffect(() => {
-    if (properties.length > 0) {
-      const incomeData = properties.map((property) => {
-        const accumulatedIncome = property.accumulatedRentalIncomePerShare
+    fetchProperties()
+  }, [fetchProperties])
 
-        let amount = "0.0"
-        try {
-          if (accumulatedIncome && accumulatedIncome !== "0") {
-            const bigNumberIncome = ethers.parseUnits(accumulatedIncome.toString(), 18)
-            amount = ethers.formatUnits(bigNumberIncome, 18)
-          }
-        } catch (error) {
-          console.warn(`Invalid accumulated income for property ${property.id}:`, error)
-        }
+  useEffect(() => {
+    if (properties && properties.length > 0) {
+      ;(async () => {
+        const incomeData = await Promise.all(
+          properties.map(async (property) => {
+            console.log("Processing property:", property)
+            const rentalIncome = await calculateRentalIncome(property.id, property.totalShares)
 
-        let lastUpdate = "N/A"
-        if (property.lastRentalUpdate) {
-          try {
-            const timestamp = Number(property.lastRentalUpdate)
-            if (!isNaN(timestamp)) {
-              lastUpdate = new Date(timestamp * 1000).toLocaleString()
+            return {
+              id: property.id,
+              propertyId: property.id,
+              propertyName: property.name,
+              amount: rentalIncome,
+              lastUpdate: property.lastRentalUpdate || "N/A",
+              accumulatedIncomePerShare: property.accumulatedRentalIncomePerShare || "0.0",
             }
-          } catch (error) {
-            console.warn(`Invalid date for property ${property.id}:`, error)
-          }
-        }
+          }),
+        )
 
-        return {
-          id: property.id,
-          propertyId: property.id,
-          propertyName: property.name,
-          amount,
-          lastUpdate,
-        }
-      })
-      setRentalIncomes(incomeData)
+        console.log("Processed rental income data:", incomeData)
+        setRentalIncomes(incomeData)
+      })()
     }
-  }, [properties])
+  }, [properties, calculateRentalIncome])
 
-  const handleClaim = async (propertyId) => {
-    if (!isConnected) {
-      toast.error("Please connect your wallet to claim rental income.")
-      return
-    }
-    setClaimError(null)
-    try {
-      const success = await claimRentalIncome(propertyId)
-      if (success) {
-        // Optionally refresh rental income data here
-        // For example, you could call a function to update the rental incomes
-        // updateRentalIncomes();
+  const handleClaim = useCallback(
+    async (propertyId) => {
+      if (!isConnected) {
+        toast.error("Please connect your wallet to claim rental income.")
+        return
       }
-    } catch (err) {
-      console.error("Error claiming rental income:", err)
-      setClaimError(`Error claiming rental income: ${err.message || err}`)
-    }
-  }
+
+      if (claimLoading) {
+        toast.info("Please wait while rental income is being claimed.")
+        return
+      }
+
+      try {
+        console.log(`Claiming rental income for property ${propertyId}...`)
+        const transactionHash = await claimRentalIncome(propertyId)
+        if (transactionHash) {
+          console.log("Claim transaction hash:", transactionHash)
+          toast.success(`Rental income claimed! TX: ${transactionHash}`)
+          fetchProperties() // Refresh properties after claiming
+        }
+      } catch (err) {
+        console.error("Error claiming rental income:", err)
+        if (err.code === "CALL_EXCEPTION") {
+          // toast.error("Failed to claim rental income. There might be no income to claim or an issue with the contract.")
+        } else {
+          toast.error(`Error claiming rental income: ${err.message || err}`)
+        }
+      }
+    },
+    [isConnected, claimLoading, claimRentalIncome, fetchProperties],
+  )
+
+  const memoizedRentalIncomes = useMemo(() => rentalIncomes, [rentalIncomes])
 
   return (
     <div className="space-y-6 p-6 bg-white min-h-screen">
@@ -94,74 +110,56 @@ export function RentalIncome() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-gray-600">Property</TableHead>
-                <TableHead className="text-gray-600">Amount (ETH)</TableHead>
+                <TableHead className="text-gray-600">Claimable Amount (ETH)</TableHead>
                 <TableHead className="text-gray-600">Last Update</TableHead>
+                <TableHead className="text-gray-600">Income Per Share (ETH)</TableHead>
                 <TableHead className="text-gray-600">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {propertiesLoading ? (
-                [...Array(3)].map((_, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[200px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[100px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[150px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-8 w-[100px]" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : propertiesError ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-red-500">
-                    Error fetching rental incomes: {propertiesError}
+                  <TableCell colSpan={5} className="text-center text-gray-600">
+                    Loading properties...
                   </TableCell>
                 </TableRow>
-              ) : rentalIncomes.length > 0 ? (
-                rentalIncomes.map((income, index) => (
-                  <motion.tr
-                    key={income.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                  >
+              ) : propertiesError ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-red-500">
+                    Error: {propertiesError}
+                  </TableCell>
+                </TableRow>
+              ) : memoizedRentalIncomes.length > 0 ? (
+                memoizedRentalIncomes.map((income) => (
+                  <TableRow key={income.id}>
                     <TableCell className="font-medium text-gray-800">{income.propertyName}</TableCell>
-                    <TableCell className="text-gray-600">{Number.parseFloat(income.amount).toFixed(6)} ETH</TableCell>
+                    <TableCell className="text-gray-600">{income.amount} ETH</TableCell>
                     <TableCell className="text-gray-600">{income.lastUpdate}</TableCell>
+                    <TableCell className="text-gray-600">{income.accumulatedIncomePerShare} ETH</TableCell>
                     <TableCell>
                       <Button
                         onClick={() => handleClaim(income.propertyId)}
-                        disabled={claimLoading}
+                        disabled={claimLoading || Number.parseFloat(income.amount) === 0}
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         {claimLoading ? "Claiming..." : "Claim"}
                       </Button>
                     </TableCell>
-                  </motion.tr>
+                  </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-gray-600">
+                  <TableCell colSpan={5} className="text-center text-gray-600">
                     No rental incomes found.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-          {claimError && (
-            <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">{claimError}</div>
-          )}
         </CardContent>
       </Card>
     </div>
   )
 }
 
-export default RentalIncome
-
+export default React.memo(RentalIncome)

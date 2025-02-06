@@ -210,12 +210,6 @@
         "internalType": "uint256",
         "name": "pricePerShare",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "initialValuation",
-        "type": "uint256"
       }
     ],
     "name": "PropertyTokenized",
@@ -226,24 +220,42 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      },
-      {
-        "indexed": true,
         "internalType": "uint256",
         "name": "propertyId",
         "type": "uint256"
       },
       {
         "indexed": false,
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "location",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "pricePerShare",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
       }
     ],
-    "name": "RentalIncomeClaimed",
+    "name": "PropertyUpdated",
     "type": "event"
   },
   {
@@ -256,13 +268,19 @@
         "type": "uint256"
       },
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
         "indexed": false,
         "internalType": "uint256",
-        "name": "totalAmount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
-    "name": "RentalIncomeDistributed",
+    "name": "RentalIncomeClaimed",
     "type": "event"
   },
   {
@@ -527,41 +545,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "numberOfShares",
         "type": "uint256"
       }
     ],
-    "name": "calculateLiquidationPrice",
+    "name": "calculateRentalIncome",
     "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "propertyId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "calculatePurchase",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
       {
         "internalType": "uint256",
         "name": "",
@@ -592,18 +581,35 @@
         "type": "uint256"
       }
     ],
-    "name": "distributeRentalIncome",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "getAvailableShares",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getAllProperties",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "getInvestmentPortfolio",
     "outputs": [
       {
         "internalType": "uint256[]",
-        "name": "",
+        "name": "propertyIds",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "shares",
         "type": "uint256[]"
       }
     ],
@@ -618,27 +624,34 @@
         "type": "uint256"
       }
     ],
-    "name": "getFinancialReport",
+    "name": "getPropertyFinancials",
     "outputs": [
       {
-        "internalType": "uint256",
-        "name": "totalRentalIncome",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalExpenses",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "netIncome",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "currentValuation",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "accumulatedRentalIncomePerShare",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lastRentalUpdate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "monthlyRentalIncome",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "bool",
+            "name": "isActive",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct RealEstateToken.PropertyFinancials",
+        "name": "",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -655,67 +668,69 @@
     "name": "getPropertyInfo",
     "outputs": [
       {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "location",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalShares",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "pricePerShare",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "location",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "internalType": "string[]",
+            "name": "imageUrls",
+            "type": "string[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalShares",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "pricePerShare",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "initialValuation",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "currentValuation",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "creationTimestamp",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct RealEstateToken.PropertyInfo",
+        "name": "",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "propertyId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      }
-    ],
-    "name": "getUnclaimedRentalIncome",
+    "inputs": [],
+    "name": "getTotalProperties",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      }
-    ],
-    "name": "getUserProperties",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
       }
     ],
     "stateMutability": "view",
@@ -775,24 +790,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "propertyId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "liquidateShares",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -954,6 +951,11 @@
         "internalType": "uint256",
         "name": "initialValuation",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalRentalIncome",
+        "type": "uint256"
       }
     ],
     "name": "tokenizeProperty",
@@ -970,6 +972,44 @@
       }
     ],
     "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "propertyId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "location",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "pricePerShare",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      }
+    ],
+    "name": "updateProperty",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1001,7 +1041,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "newRentalIncome",
+        "name": "totalRentalIncome",
         "type": "uint256"
       }
     ],

@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react"
 import { toast } from "react-toastify"
-import useContract from "./useContract"
-import ABI from "../abis/KYCManager.json"
+import useContract from "../useContract"
+import ABI from "../../abis/KYCManager.json"
 
 const useIsUserVerified = () => {
   const [loading, setLoading] = useState(false)
@@ -11,10 +11,10 @@ const useIsUserVerified = () => {
 
   const isUserVerified = useCallback(
     async (userAddress) => {
-      if (!contract) {
-        toast.error("Contract is not available")
-        return
-      }
+      // if (!contract) {
+      //   toast.error("Contract is not available")
+      //   return
+      // }
 
       setLoading(true)
       setError(null)

@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react"
 import { toast } from "react-toastify"
 import { useAppKitAccount } from "@reown/appkit/react"
-import useContract from "./useContract"
-import ABI from "../abis/KYCManager.json"
+import useContract from "../useContract"
+import ABI from "../../abis/KYCManager.json"
 
 const useGetPendingVerifications = () => {
   const [loading, setLoading] = useState(false)
@@ -12,17 +12,17 @@ const useGetPendingVerifications = () => {
   const { contract } = useContract(contractAddress, ABI)
 
   const getPendingVerifications = useCallback(async () => {
-    if (!address || !isConnected) {
-      toast.error("Please connect your wallet");
-      console.warn("Wallet not connected");
-      return;
-    }
+    // if (!address || !isConnected) {
+    //   toast.error("Please connect your wallet");
+    //   console.warn("Wallet not connected");
+    //   return;
+    // }
   
-    if (!contract) {
-      toast.error("Contract is not available");
-      console.warn("Contract is undefined");
-      return;
-    }
+    // if (!contract) {
+    //   toast.error("Contract is not available");
+    //   console.warn("Contract is undefined");
+    //   return;
+    // }
   
     setLoading(true);
     setError(null);

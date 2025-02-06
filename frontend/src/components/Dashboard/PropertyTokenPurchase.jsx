@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
-import useAllProperties from "../../hooks/useAllProperties"
-import useGetProperty from "../../hooks/useUserProperties"
-import useBuyTokens from "../../hooks/useBuyTokenShares"
+import useAllProperties from "../../hooks/Properties/useAllProperties"
+import useGetProperty from "../../hooks/Properties/useGetProperty"
+import useBuyTokens from "../../hooks/Properties/useBuyTokenShares"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle,CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -79,7 +79,6 @@ const PropertyTokenPurchase = () => {
           ? "Error: Gas limit too low or insufficient ETH for gas."
           : `Error: ${error.message}`
 
-      setPurchaseStatus(userFriendlyError)
       console.log(userFriendlyError)
     }
   }
@@ -157,7 +156,7 @@ const PropertyTokenPurchase = () => {
               <p className="text-sm text-gray-600">
                 Total Cost:{" "}
                 {purchaseAmount && property?.pricePerShare
-                  ? `${(Number(purchaseAmount) * Number(ethers.formatEther(property.pricePerShare))).toFixed(4)} ETH`
+                  ? `${(Number(purchaseAmount) * Number((property.pricePerShare))).toFixed(4)} ETH`
                   : "0 ETH"}
               </p>
             </div>

@@ -1,16 +1,16 @@
 import { useState, useCallback } from "react"
 import { toast } from "react-toastify"
-import useContract from "./useContract"
-import ABI from "../abis/RealEstateToken.json"
+import useContract from "../useContract"
+import ABI from "../../abis/RealEstateToken.json"
 
-const usePropertyInfo = () => {
+const useUserProperties = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const contractAddress = import.meta.env.VITE_APP_REAL_ESTATE_TOKEN_ADDRESS
   const { contract } = useContract(contractAddress, ABI)
 
-  const getPropertyInfo = useCallback(
-    async (propertyId) => {
+  const getUserProperties = useCallback(
+    async (userAddress) => {
       if (!contract) {
         toast.error("Contract is not available")
         return
@@ -20,15 +20,10 @@ const usePropertyInfo = () => {
       setError(null)
 
       try {
-        const info = await contract.getPropertyInfo(propertyId)
-        return {
-          name: info[0],
-          location: info[1],
-          totalShares: info[2],
-          pricePerShare: info[3],
-        }
+        const properties = await contract.getUserProperties(userAddress)
+        return properties
       } catch (err) {
-        console.error("Error getting property info:", err)
+        console.error("Error getting user properties:", err)
         toast.error(`Error: ${err.message || "An unknown error occurred."}`)
         setError(err.message)
         throw err
@@ -39,7 +34,7 @@ const usePropertyInfo = () => {
     [contract],
   )
 
-  return { getPropertyInfo, loading, error }
+  return { getUserProperties, loading, error }
 }
 
-export default usePropertyInfo
+export default useUserProperties

@@ -16,7 +16,7 @@ import {
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import useAllProperties from "../../hooks/useAllProperties"
+import useAllProperties from "../../hooks/Properties/useAllProperties"
 
 const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"]
 
@@ -31,37 +31,72 @@ const InvestmentPortfolio = () => {
     monthlyIncome: 0,
   })
 
+  // useEffect(() => {
+  //   if (Array.isArray(properties)) {
+  //     setPortfolio(properties)
+
+  //     const totalProperties = properties.length
+  //     const activeTokens = properties.reduce((acc, property) => acc + Number(property.totalShares || 0), 0)
+  //     const totalValueLocked = properties.reduce(
+  //       (acc, property) => acc + Number(property.totalShares || 0) * Number.parseFloat(property.pricePerShare || 0),
+  //       0,
+  //     )
+  //     const monthlyIncome = properties.reduce(
+  //       (acc, property) =>
+  //         acc + Number(property.accumulatedRentalIncomePerShare || 0) * Number(property.totalShares || 0),
+  //       0,
+  //     )
+
+  //     setSummary({
+  //       totalProperties,
+  //       activeTokens,
+  //       totalValueLocked,
+  //       monthlyIncome,
+  //     })
+
+  //     const rentalIncomeData = properties.map((property) => ({
+  //       id: property.id,
+  //       name: property.name,
+  //       rentalIncomeLogs: property.rentalIncomeLogs || [],
+  //     }))
+  //     setRentalLogs(rentalIncomeData)
+  //   }
+  // }, [properties])
+
   useEffect(() => {
     if (Array.isArray(properties)) {
-      setPortfolio(properties)
-
-      const totalProperties = properties.length
-      const activeTokens = properties.reduce((acc, property) => acc + Number(property.totalShares || 0), 0)
+      setPortfolio(properties);
+  
+      const totalProperties = properties.length;
+      const activeTokens = properties.reduce((acc, property) => acc + Number(property.totalShares || 0), 0);
+      const totalAvailableShares = properties.reduce((acc, property) => acc + Number(property.availableShares || 0), 0);
       const totalValueLocked = properties.reduce(
         (acc, property) => acc + Number(property.totalShares || 0) * Number.parseFloat(property.pricePerShare || 0),
-        0,
-      )
+        0
+      );
       const monthlyIncome = properties.reduce(
         (acc, property) =>
           acc + Number(property.accumulatedRentalIncomePerShare || 0) * Number(property.totalShares || 0),
-        0,
-      )
-
+        0
+      );
+  
       setSummary({
         totalProperties,
         activeTokens,
+        totalAvailableShares,
         totalValueLocked,
         monthlyIncome,
-      })
-
+      });
+  
       const rentalIncomeData = properties.map((property) => ({
         id: property.id,
         name: property.name,
         rentalIncomeLogs: property.rentalIncomeLogs || [],
-      }))
-      setRentalLogs(rentalIncomeData)
+      }));
+      setRentalLogs(rentalIncomeData);
     }
-  }, [properties])
+  }, [properties]);
+  
 
   if (loading) {
     return (

@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react"
 import { toast } from "react-toastify"
 import { useAppKitAccount } from "@reown/appkit/react"
-import useContract from "./useContract"
-import ABI from "../abis/KYCManager.json"
+import useContract from "../useContract"
+import ABI from "../../abis/KYCManager.json"
 
 const useGetUserKYCDetails = () => {
   const [loading, setLoading] = useState(false)
@@ -18,10 +18,10 @@ const useGetUserKYCDetails = () => {
         return
       }
 
-      if (!contract) {
-        toast.error("Contract is not available")
-        return
-      }
+      // if (!contract) {
+      //   toast.error("Contract is not available")
+      //   return
+      // }
 
       setLoading(true)
       setError(null)

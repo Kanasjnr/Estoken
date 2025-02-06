@@ -2,8 +2,8 @@ import { useState, useCallback } from "react"
 import { toast } from "react-toastify"
 import { ethers } from "ethers"
 import { useAppKitAccount } from "@reown/appkit/react"
-import useContract from "./useContract"
-import ABI from "../abis/RealEstateToken.json"
+import useContract from "../useContract"
+import ABI from "../../abis/RealEstateToken.json"
 
 const useTokenizeProperty = () => {
   const [loading, setLoading] = useState(false)
@@ -13,7 +13,7 @@ const useTokenizeProperty = () => {
   const { contract } = useContract(contractAddress, ABI)
 
   const tokenizeProperty = useCallback(
-    async (name, location, description, imageUrls, totalShares, pricePerShare, initialValuation) => {
+    async (name, location, description, imageUrls, totalShares, pricePerShare, initialValuation, totalRentalIncome) => {
       if (!address || !isConnected) {
         toast.error("Please connect your wallet")
         return
@@ -32,8 +32,13 @@ const useTokenizeProperty = () => {
           throw new Error("Invalid imageUrls: Must be an array of strings.")
         }
 
+        if (!pricePerShare || !initialValuation || !totalRentalIncome) {
+          throw new Error("Price per share, initial valuation, and total rental income must be provided.")
+        }
+
         const pricePerShareInWei = ethers.parseUnits(pricePerShare.toString(), "ether")
         const initialValuationInWei = ethers.parseUnits(initialValuation.toString(), "ether")
+        const totalRentalIncomeInWei = ethers.parseUnits(totalRentalIncome.toString(), "ether")
 
         const tx = await contract.tokenizeProperty(
           name,
@@ -43,6 +48,7 @@ const useTokenizeProperty = () => {
           totalShares,
           pricePerShareInWei,
           initialValuationInWei,
+          totalRentalIncomeInWei
         )
 
         const receipt = await tx.wait()

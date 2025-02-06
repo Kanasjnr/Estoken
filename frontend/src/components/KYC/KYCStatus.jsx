@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useAppKitAccount } from "@reown/appkit/react"
-import useIsUserVerified from "../../hooks/useIsUserVerified"
+import useIsUserVerified from "../../hooks/KYC/useIsUserVerified"
 import { Shield, ShieldAlert, Loader } from "lucide-react"
 
 export function KYCStatus() {
