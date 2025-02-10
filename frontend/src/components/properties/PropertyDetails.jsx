@@ -1,34 +1,33 @@
-import { useParams } from "react-router-dom"
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import useGetProperty from "../../hooks/Properties/useGetProperty"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { MapPin, Coins, DollarSign, TrendingUp, ArrowUpDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react"
-import { formatEther } from "ethers"
+import { useParams } from "react-router-dom";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import useGetProperty from "../../hooks/Properties/useGetProperty";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Coins, DollarSign, TrendingUp, ArrowUpDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
 const Loader = () => (
   <div className="flex justify-center items-center h-screen">
     <div className="w-16 h-16 border-4 border-t-primary border-primary/30 rounded-full animate-spin"></div>
   </div>
-)
+);
 
 export function PropertyDetails() {
-  const { id } = useParams()
-  const { property, loading, error } = useGetProperty(id)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const { id } = useParams();
+  const { property, totalRentalIncome, loading, error } = useGetProperty(id); // Destructure totalRentalIncome
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const nextImage = () => {
-    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % (property?.imageUrls?.length || 1))
-  }
+    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % (property?.imageUrls?.length || 1));
+  };
 
   const prevImage = () => {
     setCurrentImageIndex(
       (prevIndex) => (prevIndex - 1 + (property?.imageUrls?.length || 1)) % (property?.imageUrls?.length || 1),
-    )
-  }
+    );
+  };
 
-  if (loading) return <Loader />
+  if (loading) return <Loader />;
 
   if (error) {
     return (
@@ -39,7 +38,7 @@ export function PropertyDetails() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   if (!property) {
@@ -51,8 +50,12 @@ export function PropertyDetails() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
+
+  // Log totalRentalIncome and monthlyRentalIncome
+  console.log("Total Rental Income:", totalRentalIncome);
+  console.log("Monthly Rental Income:", property.monthlyRentalIncome);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -160,17 +163,26 @@ export function PropertyDetails() {
             </div>
           </div>
 
-         {/* Monthly Rental Income */}
-         <div className="p-4 border-t border-gray-200">
-  <h3 className="text-xl font-semibold mb-3">Total Rental Income</h3>
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-    <p className="text-lg font-medium text-gray-800">0.09 ETH</p>
-  </div>
-</div>
+          {/* Total Rental Income */}
+          <div className="p-4 border-t border-gray-200">
+            <h3 className="text-xl font-semibold mb-3">Total Rental Income</h3>
+            <p className="text-lg font-medium text-gray-800">{totalRentalIncome} ETH</p>
+          </div>
 
+          {/* Monthly Rental Income */}
+          <div className="p-4 border-t border-gray-200">
+            <h3 className="text-xl font-semibold mb-3">Monthly Rental Income</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {property.monthlyRentalIncome.map((income, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <p className="text-sm text-gray-500">Month {index + 1}</p>
+                  <p className="text-lg font-medium text-gray-800">{income} ETH</p>
+                </div>
+              ))}
+            </div>
+          </div>
 
-
-
+          {/* Active Status */}
           <div className="p-4">
             <Badge
               variant={property.isActive ? "default" : "secondary"}
@@ -182,5 +194,5 @@ export function PropertyDetails() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

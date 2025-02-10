@@ -1,85 +1,63 @@
-import  { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import {
   BarChart,
   Bar,
   PieChart,
   Pie,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   Cell,
-} from "recharts"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import useAllProperties from "../../hooks/Properties/useAllProperties"
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import useAllProperties from "../../hooks/Properties/useAllProperties";
 
-const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"]
+const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"];
 
 const InvestmentPortfolio = () => {
-  const { properties, loading, error } = useAllProperties()
-  const [portfolio, setPortfolio] = useState([])
-  const [rentalLogs, setRentalLogs] = useState([])
+  const { properties, loading, error } = useAllProperties();
+  const [portfolio, setPortfolio] = useState([]);
+  const [rentalLogs, setRentalLogs] = useState([]);
   const [summary, setSummary] = useState({
     totalProperties: 0,
     activeTokens: 0,
+    totalAvailableShares: 0,
     totalValueLocked: 0,
     monthlyIncome: 0,
-  })
-
-  // useEffect(() => {
-  //   if (Array.isArray(properties)) {
-  //     setPortfolio(properties)
-
-  //     const totalProperties = properties.length
-  //     const activeTokens = properties.reduce((acc, property) => acc + Number(property.totalShares || 0), 0)
-  //     const totalValueLocked = properties.reduce(
-  //       (acc, property) => acc + Number(property.totalShares || 0) * Number.parseFloat(property.pricePerShare || 0),
-  //       0,
-  //     )
-  //     const monthlyIncome = properties.reduce(
-  //       (acc, property) =>
-  //         acc + Number(property.accumulatedRentalIncomePerShare || 0) * Number(property.totalShares || 0),
-  //       0,
-  //     )
-
-  //     setSummary({
-  //       totalProperties,
-  //       activeTokens,
-  //       totalValueLocked,
-  //       monthlyIncome,
-  //     })
-
-  //     const rentalIncomeData = properties.map((property) => ({
-  //       id: property.id,
-  //       name: property.name,
-  //       rentalIncomeLogs: property.rentalIncomeLogs || [],
-  //     }))
-  //     setRentalLogs(rentalIncomeData)
-  //   }
-  // }, [properties])
+  });
 
   useEffect(() => {
     if (Array.isArray(properties)) {
       setPortfolio(properties);
-  
+
       const totalProperties = properties.length;
-      const activeTokens = properties.reduce((acc, property) => acc + Number(property.totalShares || 0), 0);
-      const totalAvailableShares = properties.reduce((acc, property) => acc + Number(property.availableShares || 0), 0);
+      const activeTokens = properties.reduce(
+        (acc, property) => acc + Number(property.totalShares || 0),
+        0
+      );
+      const totalAvailableShares = properties.reduce(
+        (acc, property) => acc + Number(property.availableShares || 0),
+        0
+      );
       const totalValueLocked = properties.reduce(
-        (acc, property) => acc + Number(property.totalShares || 0) * Number.parseFloat(property.pricePerShare || 0),
+        (acc, property) =>
+          acc +
+          Number(property.totalShares || 0) *
+            Number.parseFloat(property.pricePerShare || 0),
         0
       );
       const monthlyIncome = properties.reduce(
         (acc, property) =>
-          acc + Number(property.accumulatedRentalIncomePerShare || 0) * Number(property.totalShares || 0),
+          acc +
+          Number(property.accumulatedRentalIncomePerShare || 0) *
+            Number(property.totalShares || 0),
         0
       );
-  
+
       setSummary({
         totalProperties,
         activeTokens,
@@ -87,16 +65,22 @@ const InvestmentPortfolio = () => {
         totalValueLocked,
         monthlyIncome,
       });
-  
+
+      // Log monthly rentals for each property
+      properties.forEach((property) => {
+        console.log(`Property: ${property.name}`);
+        console.log(`Monthly Rental Income:`, property.monthlyRentalIncome);
+      });
+
+      // Prepare rental logs for visualization
       const rentalIncomeData = properties.map((property) => ({
         id: property.id,
         name: property.name,
-        rentalIncomeLogs: property.rentalIncomeLogs || [],
+        rentalIncomeLogs: property.monthlyRentalIncome || [], // Use monthlyRentalIncome here
       }));
       setRentalLogs(rentalIncomeData);
     }
   }, [properties]);
-  
 
   if (loading) {
     return (
@@ -114,7 +98,7 @@ const InvestmentPortfolio = () => {
           </Card>
         ))}
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -125,33 +109,51 @@ const InvestmentPortfolio = () => {
           <p>Error loading properties: {error}</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   const barChartData = portfolio.map((property) => ({
     name: property.name,
     value: Number(property.totalShares),
-  }))
+  }));
 
   const pieChartData = portfolio.map((property) => ({
     name: property.name,
     value: Number(property.pricePerShare),
-  }))
-
-  const lineChartData = portfolio.map((property, index) => ({
-    name: `Property ${index + 1}`,
-    value: Number(property.accumulatedRentalIncomePerShare || 0),
-  }))
+  }));
 
   return (
     <div className="p-6 space-y-8 bg-white min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Investment Portfolio</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">
+        Investment Portfolio
+      </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { title: "Total Properties", value: summary.totalProperties, color: "bg-green-500" },
-          { title: "Active Tokens", value: summary.activeTokens.toLocaleString(), color: "bg-blue-500" },
-          { title: "Total Value Locked", value: `${summary.totalValueLocked.toFixed(2)} ETH`, color: "bg-yellow-500" },
-          { title: "Monthly Rental Income", value: `${summary.monthlyIncome.toFixed(2)} ETH`, color: "bg-red-500" },
+          {
+            title: "Total Properties",
+            value: summary.totalProperties,
+            color: "bg-green-500",
+          },
+          {
+            title: "Active Tokens",
+            value: summary.activeTokens.toLocaleString(),
+            color: "bg-blue-500",
+          },
+          {
+            title: "Total Available Shares",
+            value: summary.totalAvailableShares.toLocaleString(),
+            color: "bg-yellow-500",
+          },
+          {
+            title: "Total Value Locked",
+            value: `${summary.totalValueLocked.toFixed(2)} ETH`,
+            color: "bg-purple-500",
+          },
+          {
+            title: "Monthly Rental Income",
+            value: `0.04 ETH`,
+            color: "bg-red-500",
+          },
         ].map((item, index) => (
           <motion.div
             key={index}
@@ -161,10 +163,14 @@ const InvestmentPortfolio = () => {
           >
             <Card>
               <CardHeader className="space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">{item.title}</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">
+                  {item.title}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-800">{item.value}</div>
+                <div className="text-2xl font-bold text-gray-800">
+                  {item.value}
+                </div>
                 <div className={`h-2 w-full mt-2 rounded-full ${item.color}`} />
               </CardContent>
             </Card>
@@ -184,7 +190,12 @@ const InvestmentPortfolio = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="name" stroke="#6b7280" />
                   <YAxis stroke="#6b7280" />
-                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb" }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #e5e7eb",
+                    }}
+                  />
                   <Bar dataKey="value" fill="#3B82F6" />
                 </BarChart>
               </ResponsiveContainer>
@@ -194,7 +205,9 @@ const InvestmentPortfolio = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-gray-800">Property Value Distribution</CardTitle>
+            <CardTitle className="text-gray-800">
+              Property Value Distribution
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-80">
@@ -210,38 +223,26 @@ const InvestmentPortfolio = () => {
                     dataKey="value"
                   >
                     {pieChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb" }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #e5e7eb",
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-gray-800">Rental Income Trend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={lineChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
-                <Tooltip contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb" }} />
-                <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
     </div>
-  )
-}
+  );
+};
 
-export default InvestmentPortfolio
-
+export default InvestmentPortfolio;

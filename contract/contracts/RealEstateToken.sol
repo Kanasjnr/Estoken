@@ -38,7 +38,7 @@ contract RealEstateToken is ERC1155, Ownable {
     mapping(uint256 => mapping(address => uint256)) private _tokenBalances;
     mapping(uint256 => mapping(address => uint256)) private _lastClaimTimestamp;
     mapping(uint256 => mapping(address => uint256)) private _nftOwnership;
-    
+    mapping(uint256 => uint256) private _nftShares; // New mapping to track shares per NFT
     mapping(uint256 => uint256) private _accumulatedDividendsPerShare;
     mapping(uint256 => mapping(address => uint256)) private _lastDividendsClaimed;
 
@@ -50,7 +50,7 @@ contract RealEstateToken is ERC1155, Ownable {
     event RentalIncomeClaimed(uint256 indexed propertyId, address indexed account, uint256 amount);
     event TokenSharesPurchased(uint256 indexed propertyId, address indexed buyer, uint256 amount, uint256 totalPrice);
     event SharesLiquidated(uint256 indexed propertyId, address indexed seller, uint256 amount, uint256 totalPrice);
-    event NFTMinted(uint256 indexed propertyId, address indexed buyer, uint256 tokenId);
+    event NFTMinted(uint256 indexed propertyId, address indexed buyer, uint256 tokenId, uint256 shares);
     event DividendsDeclared(uint256 indexed propertyId, uint256 amount);
     event DividendsClaimed(uint256 indexed propertyId, address indexed account, uint256 amount);
 
@@ -149,36 +149,43 @@ contract RealEstateToken is ERC1155, Ownable {
             payable(msg.sender).transfer(msg.value - totalPrice);
         }
 
-        _mintNFT(propertyId, msg.sender);
+        _mintNFT(propertyId, msg.sender, amount); // Pass the amount of shares to the NFT minting function
 
         _lastDividendsClaimed[propertyId][msg.sender] = _accumulatedDividendsPerShare[propertyId];
 
         emit TokenSharesPurchased(propertyId, msg.sender, amount, totalPrice);
     }
 
-    function _mintNFT(uint256 propertyId, address buyer) internal {
+    function _mintNFT(uint256 propertyId, address buyer, uint256 shares) internal {
         _tokenIds++;
         uint256 newTokenId = _tokenIds;
 
-        _mint(buyer, newTokenId, 1, "");
+        _mint(buyer, newTokenId, 1, ""); // Mint the NFT
         _nftOwnership[propertyId][buyer] = newTokenId;
+        _nftShares[newTokenId] = shares; // Store the number of shares associated with this NFT
 
-        emit NFTMinted(propertyId, buyer, newTokenId);
+        emit NFTMinted(propertyId, buyer, newTokenId, shares); // Emit event with NFT and shares info
     }
 
-    function getNFTForProperty(uint256 propertyId, address owner) public view returns (uint256) {
-        return _nftOwnership[propertyId][owner];
+    function getNFTForProperty(uint256 propertyId, address owner) public view returns (uint256 tokenId, uint256 shares) {
+        tokenId = _nftOwnership[propertyId][owner];
+        require(tokenId != 0, "No NFT found for this property and owner");
+        shares = _nftShares[tokenId]; // Retrieve the shares associated with the NFT
+        return (tokenId, shares);
     }
 
-    function updateRentalIncome(uint256 propertyId, uint256 totalRentalIncome) public onlyOwner {
+    function addMonthlyRentalIncome(uint256 propertyId, uint256 rentalIncome) public onlyOwner {
         require(_propertyExists(propertyId), "Property does not exist");
+        require(rentalIncome > 0, "Rental income must be greater than zero");
 
         PropertyFinancials storage propertyFinancials = _propertyFinancials[propertyId];
+        propertyFinancials.monthlyRentalIncome.push(rentalIncome);
 
-        propertyFinancials.accumulatedRentalIncomePerShare = totalRentalIncome / _propertyInfo[propertyId].totalShares;
+        // Update accumulated rental income per share
+        propertyFinancials.accumulatedRentalIncomePerShare += rentalIncome / _propertyInfo[propertyId].totalShares;
         propertyFinancials.lastRentalUpdate = block.timestamp;
 
-        emit RentalIncomeUpdated(propertyId, totalRentalIncome);
+        emit RentalIncomeUpdated(propertyId, rentalIncome);
     }
 
     function claimRentalIncome(uint256 propertyId) public {
@@ -300,10 +307,10 @@ contract RealEstateToken is ERC1155, Ownable {
         require(_propertyExists(propertyId), "Property does not exist");
         uint256 owing = calculateDividends(propertyId, msg.sender);
         require(owing > 0, "No dividends to claim");
-        
+
         _lastDividendsClaimed[propertyId][msg.sender] = _accumulatedDividendsPerShare[propertyId];
         payable(msg.sender).transfer(owing);
-        
+
         emit DividendsClaimed(propertyId, msg.sender, owing);
     }
 
@@ -313,4 +320,3 @@ contract RealEstateToken is ERC1155, Ownable {
         return ((_accumulatedDividendsPerShare[propertyId] - _lastDividendsClaimed[propertyId][account]) * shares) / 1e18;
     }
 }
-
