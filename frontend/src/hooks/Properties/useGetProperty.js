@@ -1,47 +1,49 @@
-import { useState, useEffect } from "react"
-import { ethers } from "ethers"
-import useContract from "../useContract"
-import ABI from "../../abis/RealEstateToken.json"
+"use client";
+
+import { useState, useEffect } from "react";
+import { ethers } from "ethers";
+import useContract from "../useContract";
+import ABI from "../../abis/RealEstateToken.json";
 
 const useGetProperty = (propertyId) => {
-  const [property, setProperty] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [totalRentalIncome, setTotalRentalIncome] = useState("0")
-  const { contract, error: contractError } = useContract(import.meta.env.VITE_APP_REAL_ESTATE_TOKEN_ADDRESS, ABI)
+  const [property, setProperty] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalRentalIncome, setTotalRentalIncome] = useState("0");
+  const { contract, error: contractError } = useContract(import.meta.env.VITE_APP_REAL_ESTATE_TOKEN_ADDRESS, ABI);
 
   useEffect(() => {
     if (!contract || contractError) {
-      console.error("Contract not initialized or has an error")
-      setError(contractError?.message || "Contract not initialized")
-      setLoading(false)
-      return
+      console.error("Contract not initialized or has an error");
+      setError(contractError?.message || "Contract not initialized");
+      setLoading(false);
+      return;
     }
 
     if (!propertyId) {
-      console.error("Property ID is undefined")
-      setError("Property ID is undefined")
-      setLoading(false)
-      return
+      console.error("Property ID is undefined");
+      setError("Property ID is undefined");
+      setLoading(false);
+      return;
     }
 
     const fetchProperty = async () => {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
       try {
-        const info = await contract.getPropertyInfo(propertyId)
-        const financials = await contract.getPropertyFinancials(propertyId)
-        const availableShares = await contract.getAvailableShares(propertyId)
+        const info = await contract.getPropertyInfo(propertyId);
+        const financials = await contract.getPropertyFinancials(propertyId);
+        const availableShares = await contract.getAvailableShares(propertyId);
 
         // Safely calculate total rental income
         const totalIncome = Array.isArray(financials.monthlyRentalIncome)
           ? financials.monthlyRentalIncome.reduce((acc, curr) => {
-              return acc + Number(ethers.formatEther(curr)) // Convert to a normal number
+              return acc + Number(ethers.formatEther(curr)); // Convert to a normal number
             }, 0)
-          : 0 // Default to 0 if no rental income data
+          : 0; // Default to 0 if no rental income data
 
-        const totalIncomeInEther = totalIncome.toFixed(4) // Convert to string with 4 decimal places
+        const totalIncomeInEther = totalIncome.toFixed(4); // Convert to string with 4 decimal places
 
         setProperty({
           id: propertyId,
@@ -58,23 +60,22 @@ const useGetProperty = (propertyId) => {
           accumulatedRentalIncomePerShare: ethers.formatEther(financials.accumulatedRentalIncomePerShare),
           lastRentalUpdate: new Date(Number(financials.lastRentalUpdate) * 1000).toLocaleString(),
           isActive: financials.isActive,
-          monthlyRentalIncome: financials.monthlyRentalIncome.map((totalRentalIncome) => ethers.formatEther(totalRentalIncome)),
-        })
+          monthlyRentalIncome: financials.monthlyRentalIncome.map((income) => ethers.formatEther(income)),
+        });
 
-        setTotalRentalIncome(totalIncomeInEther) // Set the total rental income
-
+        setTotalRentalIncome(totalIncomeInEther); // Set the total rental income
       } catch (err) {
-        console.error("Error fetching property:", err)
-        setError("Error fetching property: " + err.message)
+        console.error("Error fetching property:", err);
+        setError("Error fetching property: " + err.message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchProperty()
-  }, [propertyId, contract, contractError])
+    fetchProperty();
+  }, [propertyId, contract, contractError]);
 
-  return { property, totalRentalIncome, loading, error }
-}
+  return { property, totalRentalIncome, loading, error };
+};
 
-export default useGetProperty
+export default useGetProperty;

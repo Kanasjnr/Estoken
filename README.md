@@ -23,7 +23,6 @@ Estoken tokenizes property shares as ERC-1155 tokens, enabling seamless ownershi
 ## 🛠 Technologies Used
 
 - Solidity
-- CrossFI Blockchain
 - Chainlink (for RWA tokenization)
 - Hardhat
 - React.js
