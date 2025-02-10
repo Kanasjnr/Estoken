@@ -5,7 +5,7 @@ import { useAppKitAccount } from "@reown/appkit/react"
 import useSignerOrProvider from "../useSignerOrProvider"
 import ABI from "../../abis/RealEstateToken.json"
 
-const useBuyTokens = () => {
+const useBuyTokensShares = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const { address, isConnected } = useAppKitAccount()
@@ -101,5 +101,5 @@ const useBuyTokens = () => {
   return { buyTokens, loading, error }
 }
 
-export default useBuyTokens
+export default useBuyTokensShares
 

@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { ethers } from "ethers"
 import useContract from "../useContract"
@@ -58,11 +60,10 @@ const useGetProperty = (propertyId) => {
           accumulatedRentalIncomePerShare: ethers.formatEther(financials.accumulatedRentalIncomePerShare),
           lastRentalUpdate: new Date(Number(financials.lastRentalUpdate) * 1000).toLocaleString(),
           isActive: financials.isActive,
-          monthlyRentalIncome: financials.monthlyRentalIncome.map((totalRentalIncome) => ethers.formatEther(totalRentalIncome)),
+          monthlyRentalIncome: financials.monthlyRentalIncome.map((income) => ethers.formatEther(income)),
         })
 
         setTotalRentalIncome(totalIncomeInEther) // Set the total rental income
-
       } catch (err) {
         console.error("Error fetching property:", err)
         setError("Error fetching property: " + err.message)
@@ -78,3 +79,4 @@ const useGetProperty = (propertyId) => {
 }
 
 export default useGetProperty
+

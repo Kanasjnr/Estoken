@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useCallback, useEffect } from "react"
 import { ethers } from "ethers"
 import { toast } from "react-toastify"
@@ -49,3 +47,4 @@ const useCalculateRentalIncome = () => {
 }
 
 export default useCalculateRentalIncome
+

@@ -3,12 +3,15 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "./KYCManager.sol";
 
 contract RealEstateToken is ERC1155, Ownable {
+    using Strings for uint256;
 
     uint256 public constant PLATFORM_FEE_PERCENTAGE = 2;
     uint256 private _nextPropertyId = 1;
+    uint256 private _tokenIds;
 
     struct PropertyInfo {
         string name;
@@ -34,7 +37,11 @@ contract RealEstateToken is ERC1155, Ownable {
     mapping(uint256 => uint256) private _availableShares;
     mapping(uint256 => mapping(address => uint256)) private _tokenBalances;
     mapping(uint256 => mapping(address => uint256)) private _lastClaimTimestamp;
+    mapping(uint256 => mapping(address => uint256)) private _nftOwnership;
     
+    mapping(uint256 => uint256) private _accumulatedDividendsPerShare;
+    mapping(uint256 => mapping(address => uint256)) private _lastDividendsClaimed;
+
     address public kycManager;
 
     event PropertyTokenized(uint256 indexed propertyId, string name, string location, uint256 totalShares, uint256 pricePerShare);
@@ -43,10 +50,11 @@ contract RealEstateToken is ERC1155, Ownable {
     event RentalIncomeClaimed(uint256 indexed propertyId, address indexed account, uint256 amount);
     event TokenSharesPurchased(uint256 indexed propertyId, address indexed buyer, uint256 amount, uint256 totalPrice);
     event SharesLiquidated(uint256 indexed propertyId, address indexed seller, uint256 amount, uint256 totalPrice);
+    event NFTMinted(uint256 indexed propertyId, address indexed buyer, uint256 tokenId);
+    event DividendsDeclared(uint256 indexed propertyId, uint256 amount);
+    event DividendsClaimed(uint256 indexed propertyId, address indexed account, uint256 amount);
 
-    constructor(
-        address _kycManager
-    ) ERC1155("https://api.example.com/token/{id}.json") Ownable(msg.sender) {
+    constructor(address _kycManager) ERC1155("https://api.example.com/token/{id}.json") Ownable(msg.sender) {
         kycManager = _kycManager;
     }
 
@@ -62,7 +70,7 @@ contract RealEstateToken is ERC1155, Ownable {
         uint256 totalShares,
         uint256 pricePerShare,
         uint256 initialValuation,
-        uint256 totalRentalIncome // Total rental income for a period
+        uint256 totalRentalIncome
     ) public {
         require(isUserVerified(msg.sender), "User must be KYC verified to tokenize property");
         require(imageUrls.length > 0, "At least one image URL is required");
@@ -71,7 +79,6 @@ contract RealEstateToken is ERC1155, Ownable {
 
         uint256 newPropertyId = _nextPropertyId;
 
-        // Store property info
         _propertyInfo[newPropertyId] = PropertyInfo({
             name: name,
             location: location,
@@ -84,9 +91,8 @@ contract RealEstateToken is ERC1155, Ownable {
             creationTimestamp: block.timestamp
         });
 
-        // Store property financials including rental income per share
         _propertyFinancials[newPropertyId] = PropertyFinancials({
-            accumulatedRentalIncomePerShare: totalRentalIncome / totalShares, // Rental income per share
+            accumulatedRentalIncomePerShare: totalRentalIncome / totalShares,
             lastRentalUpdate: block.timestamp,
             monthlyRentalIncome: new uint256[](0),
             isActive: true
@@ -143,7 +149,25 @@ contract RealEstateToken is ERC1155, Ownable {
             payable(msg.sender).transfer(msg.value - totalPrice);
         }
 
+        _mintNFT(propertyId, msg.sender);
+
+        _lastDividendsClaimed[propertyId][msg.sender] = _accumulatedDividendsPerShare[propertyId];
+
         emit TokenSharesPurchased(propertyId, msg.sender, amount, totalPrice);
+    }
+
+    function _mintNFT(uint256 propertyId, address buyer) internal {
+        _tokenIds++;
+        uint256 newTokenId = _tokenIds;
+
+        _mint(buyer, newTokenId, 1, "");
+        _nftOwnership[propertyId][buyer] = newTokenId;
+
+        emit NFTMinted(propertyId, buyer, newTokenId);
+    }
+
+    function getNFTForProperty(uint256 propertyId, address owner) public view returns (uint256) {
+        return _nftOwnership[propertyId][owner];
     }
 
     function updateRentalIncome(uint256 propertyId, uint256 totalRentalIncome) public onlyOwner {
@@ -151,7 +175,6 @@ contract RealEstateToken is ERC1155, Ownable {
 
         PropertyFinancials storage propertyFinancials = _propertyFinancials[propertyId];
 
-        // Update the rental income per share
         propertyFinancials.accumulatedRentalIncomePerShare = totalRentalIncome / _propertyInfo[propertyId].totalShares;
         propertyFinancials.lastRentalUpdate = block.timestamp;
 
@@ -184,10 +207,8 @@ contract RealEstateToken is ERC1155, Ownable {
 
         PropertyFinancials storage propertyFinancials = _propertyFinancials[propertyId];
 
-        // Rental income per share is already stored as accumulatedRentalIncomePerShare
         uint256 rentalIncomePerShare = propertyFinancials.accumulatedRentalIncomePerShare;
 
-        // Calculate total rental income for the specified number of shares
         uint256 totalRentalIncome = rentalIncomePerShare * numberOfShares;
 
         return totalRentalIncome;
@@ -250,10 +271,46 @@ contract RealEstateToken is ERC1155, Ownable {
 
         for (uint256 i = 1; i < _nextPropertyId; i++) {
             if (_tokenBalances[i][user] > 0) {
-                propertyIds[propertyCount] = i;
-                shares[propertyCount] = _tokenBalances[i][user];
                 propertyCount++;
             }
         }
+
+        propertyIds = new uint256[](propertyCount);
+        shares = new uint256[](propertyCount);
+
+        uint256 index = 0;
+        for (uint256 i = 1; i < _nextPropertyId; i++) {
+            if (_tokenBalances[i][user] > 0) {
+                propertyIds[index] = i;
+                shares[index] = _tokenBalances[i][user];
+                index++;
+            }
+        }
+    }
+
+    function declareDividends(uint256 propertyId) public payable onlyOwner {
+        require(_propertyExists(propertyId), "Property does not exist");
+        require(msg.value > 0, "Must send dividends");
+        uint256 totalShares = _propertyInfo[propertyId].totalShares;
+        _accumulatedDividendsPerShare[propertyId] += (msg.value * 1e18) / totalShares;
+        emit DividendsDeclared(propertyId, msg.value);
+    }
+
+    function claimDividends(uint256 propertyId) public {
+        require(_propertyExists(propertyId), "Property does not exist");
+        uint256 owing = calculateDividends(propertyId, msg.sender);
+        require(owing > 0, "No dividends to claim");
+        
+        _lastDividendsClaimed[propertyId][msg.sender] = _accumulatedDividendsPerShare[propertyId];
+        payable(msg.sender).transfer(owing);
+        
+        emit DividendsClaimed(propertyId, msg.sender, owing);
+    }
+
+    function calculateDividends(uint256 propertyId, address account) public view returns (uint256) {
+        require(_propertyExists(propertyId), "Property does not exist");
+        uint256 shares = balanceOf(account, propertyId);
+        return ((_accumulatedDividendsPerShare[propertyId] - _lastDividendsClaimed[propertyId][account]) * shares) / 1e18;
     }
 }
+

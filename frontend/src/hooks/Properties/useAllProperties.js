@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { ethers } from "ethers"
-// import { toast } from "react-toastify"
+import { toast } from "react-toastify"
 import useContract from "../useContract"
 import ABI from "../../abis/RealEstateToken.json"
 
@@ -13,10 +13,10 @@ const useAllProperties = () => {
   const { contract } = useContract(contractAddress, ABI)
 
   const getAllProperties = useCallback(async () => {
-    // if (!contract) {
-    //   toast.error("Contract is not available")
-    //   return []
-    // }
+    if (!contract) {
+      toast.error("Contract is not available")
+      return []
+    }
 
     setLoading(true)
     setError(null)
@@ -99,3 +99,4 @@ const useAllProperties = () => {
 }
 
 export default useAllProperties
+
