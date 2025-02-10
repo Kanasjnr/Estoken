@@ -10,6 +10,7 @@ import PropertyTokenPurchase from "../components/Dashboard/PropertyTokenPurchase
 import { KYCStatus } from "../components/KYC/KYCStatus"
 import { KYCSubmissionForm } from "../components/KYC/KYCSubmissionForm"
 import { KYCVerificationList } from "../components/KYC/KYCVerificationList"
+import NFTViewer from "../components/Dashboard/NFTViewer"
 // import Notifications from "../components/Dashboard/Notifications"
 
 function DashboardPage() {
@@ -27,6 +28,8 @@ function DashboardPage() {
               <Route path="/tokenization" element={<PropertyTokenization />} />
               <Route path="/marketplace" element={<PropertyTokenPurchase />} />
               <Route path="/rental" element={<RentalIncome />} />
+              <Route path="/nfts" element={<NFTViewer />} />
+
               <Route
                 path="/kyc"
                 element={

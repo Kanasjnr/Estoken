@@ -5,15 +5,15 @@ import { useAppKitAccount } from "@reown/appkit/react"
 import useContract from "../useContract"
 import ABI from "../../abis/RealEstateToken.json"
 
-const useUpdatePropertyValuation = () => {
+const useDeclareDividends = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const { address, isConnected } = useAppKitAccount()
   const contractAddress = import.meta.env.VITE_APP_REAL_ESTATE_TOKEN_ADDRESS
   const { contract } = useContract(contractAddress, ABI)
 
-  const updatePropertyValuation = useCallback(
-    async (propertyId, newValuation) => {
+  const declareDividends = useCallback(
+    async (propertyId, amount) => {
       if (!address || !isConnected) {
         toast.error("Please connect your wallet")
         return
@@ -28,18 +28,18 @@ const useUpdatePropertyValuation = () => {
       setError(null)
 
       try {
-        const newValuationInWei = ethers.parseUnits(newValuation.toString(), "ether")
-        const tx = await contract.updatePropertyValuation(propertyId, newValuationInWei)
+        const amountInWei = ethers.parseUnits(amount.toString(), "ether")
+        const tx = await contract.declareDividends(propertyId, { value: amountInWei })
         const receipt = await tx.wait()
 
         if (receipt.status === 1) {
-          toast.success("Property valuation updated successfully!")
+          toast.success("Dividends declared successfully!")
           return receipt.transactionHash
         } else {
           throw new Error("Transaction failed")
         }
       } catch (err) {
-        console.error("Error updating property valuation:", err)
+        console.error("Error declaring dividends:", err)
         toast.error(`Error: ${err.message || "An unknown error occurred."}`)
         setError(err.message)
         throw err
@@ -50,8 +50,8 @@ const useUpdatePropertyValuation = () => {
     [address, isConnected, contract],
   )
 
-  return { updatePropertyValuation, loading, error }
+  return { declareDividends, loading, error }
 }
 
-export default useUpdatePropertyValuation
+export default useDeclareDividends
 

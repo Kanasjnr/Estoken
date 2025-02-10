@@ -1,11 +1,10 @@
-"use client";
-
 import { useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import { useAppKitAccount } from "@reown/appkit/react";
 import useContract from "../useContract";
+import useCalculateRentalIncome from "./useCalculateRentalIncome"; // Import the new hook
 import ABI from "../../abis/RealEstateToken.json";
-import { toBigInt } from "ethers"; // Import for Ethers v6 compatibility
+import { ethers } from "ethers";
 
 const useClaimRentalIncome = () => {
   const [loading, setLoading] = useState(false);
@@ -13,18 +12,17 @@ const useClaimRentalIncome = () => {
   const { address, isConnected } = useAppKitAccount();
   const contractAddress = import.meta.env.VITE_APP_REAL_ESTATE_TOKEN_ADDRESS;
   const { contract } = useContract(contractAddress, ABI);
+  const { calculateRentalIncome } = useCalculateRentalIncome(); // Use the new hook
 
   const claimRentalIncome = useCallback(
     async (propertyId) => {
       if (!address || !isConnected) {
-        toast.error("Please connect your wallet");
+        // toast.error("Please connect your wallet");
         return;
       }
 
       if (!contract) {
-        toast.error(
-          "Contract is not initialized. Please refresh and try again."
-        );
+        toast.error("Contract is not initialized. Please refresh and try again.");
         return;
       }
 
@@ -32,15 +30,12 @@ const useClaimRentalIncome = () => {
       setError(null);
 
       try {
-        // First, check if there's any rental income to claim
-        const rentalIncome = await contract.calculateRentalIncome(
-          propertyId,
-          1
-        );
+        // Use the calculateRentalIncome hook to check for available rental income
+        const rentalIncome = await calculateRentalIncome(propertyId, 1);
         console.log("Rental Income:", rentalIncome); // Debugging log
 
-        // Fix for Ethers v6: Convert to BigInt for comparison
-        if (toBigInt(rentalIncome) === 0n) {
+        // Convert to BigInt for comparison
+        if (BigInt(ethers.parseEther(rentalIncome)) === BigInt(0)) {
           toast.error("No rental income to claim for this property.");
           return;
         }
@@ -60,8 +55,7 @@ const useClaimRentalIncome = () => {
 
         let errorMessage = "An unknown error occurred.";
         if (err.code === "CALL_EXCEPTION") {
-          errorMessage =
-            "Transaction reverted. You can try claiming your monthly rental income again.";
+          errorMessage = "Transaction failed. Rental income can be claimed in 30 days.";
         } else if (err.reason) {
           errorMessage = err.reason;
         } else if (err.message) {
@@ -75,7 +69,7 @@ const useClaimRentalIncome = () => {
         setLoading(false);
       }
     },
-    [address, isConnected, contract]
+    [address, isConnected, contract, calculateRentalIncome], // Add calculateRentalIncome to dependencies
   );
 
   return { claimRentalIncome, loading, error };

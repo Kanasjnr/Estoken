@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useCallback } from "react"
 import { toast } from "react-toastify"
 import { ethers } from "ethers"
@@ -20,7 +22,7 @@ const useTokenizeProperty = () => {
       }
 
       if (!contract) {
-        toast.error("Contract is not available")
+        // toast.error("Contract is not available")
         return
       }
 
@@ -48,7 +50,7 @@ const useTokenizeProperty = () => {
           totalShares,
           pricePerShareInWei,
           initialValuationInWei,
-          totalRentalIncomeInWei
+          totalRentalIncomeInWei,
         )
 
         const receipt = await tx.wait()
@@ -75,3 +77,4 @@ const useTokenizeProperty = () => {
 }
 
 export default useTokenizeProperty
+

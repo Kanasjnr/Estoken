@@ -2,7 +2,7 @@ import React from "react"
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Building, Coins, BarChart2, ShoppingCart, Menu, UserCheck } from "lucide-react"
+import { LayoutDashboard, Building, Coins, BarChart2, ShoppingCart, Menu, UserCheck,Image } from "lucide-react"
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -10,6 +10,7 @@ const menuItems = [
   { icon: Coins, label: "Tokenization", path: "/dashboard/tokenization" },
   { icon: BarChart2, label: "Rental Income", path: "/dashboard/rental" },
   { icon: ShoppingCart, label: "Marketplace", path: "/dashboard/marketplace" },
+  { icon: Image, label: "My NFTs", path: "/dashboard/nfts" },
   { icon: UserCheck, label: "KYC", path: "/dashboard/kyc" },
 ]
 

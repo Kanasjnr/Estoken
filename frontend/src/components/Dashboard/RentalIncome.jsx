@@ -15,7 +15,7 @@ export function RentalIncome() {
   const [rentalIncomes, setRentalIncomes] = useState([])
   const { isConnected } = useAppKitAccount()
   const { claimRentalIncome, loading: claimLoading } = useClaimRentalIncome()
-  const { calculateRentalIncome } = useCalculateRentalIncome()
+  const { calculateRentalIncome, loading: calculateLoading } = useCalculateRentalIncome()
   const { getAllProperties, loading: propertiesLoading, propertiesError, properties } = useAllProperties()
 
   const fetchProperties = useCallback(async () => {
@@ -38,7 +38,7 @@ export function RentalIncome() {
         const incomeData = await Promise.all(
           properties.map(async (property) => {
             console.log("Processing property:", property)
-            const rentalIncome = await calculateRentalIncome(property.id, property.totalShares)
+            const rentalIncome = await calculateRentalIncome(property.id, 1) // Calculate for 1 share
 
             return {
               id: property.id,
@@ -79,11 +79,7 @@ export function RentalIncome() {
         }
       } catch (err) {
         console.error("Error claiming rental income:", err)
-        if (err.code === "CALL_EXCEPTION") {
-          // toast.error("Failed to claim rental income. There might be no income to claim or an issue with the contract.")
-        } else {
-          toast.error(`Error claiming rental income: ${err.message || err}`)
-        }
+       
       }
     },
     [isConnected, claimLoading, claimRentalIncome, fetchProperties],
@@ -113,14 +109,14 @@ export function RentalIncome() {
                 <TableHead className="text-gray-600">Claimable Amount (ETH)</TableHead>
                 <TableHead className="text-gray-600">Last Update</TableHead>
                 <TableHead className="text-gray-600">Income Per Share (ETH)</TableHead>
-                <TableHead className="text-gray-600">Action</TableHead>
+                <TableHead className="text-gray-600">Action</TableHead> {/* Fixed: Changed </TableRow> to </TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {propertiesLoading ? (
+              {propertiesLoading || calculateLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-gray-600">
-                    Loading properties...
+                    Loading properties and rental incomes...
                   </TableCell>
                 </TableRow>
               ) : propertiesError ? (
