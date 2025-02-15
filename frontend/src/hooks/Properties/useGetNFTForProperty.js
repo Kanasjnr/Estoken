@@ -30,7 +30,8 @@ const useGetNFTForProperty = () => {
         return { tokenId, shares }; // Return both tokenId and shares
       } catch (err) {
         console.error("Error getting NFT for property:", err);
-        const errorMessage = err.reason || err.message || "An unknown error occurred.";
+        const errorMessage =
+          err.reason || err.message || "An unknown error occurred.";
         toast.error(`Error: ${errorMessage}`);
         setError(errorMessage);
         return null;
@@ -38,7 +39,7 @@ const useGetNFTForProperty = () => {
         setLoading(false);
       }
     },
-    [contract],
+    [contract]
   );
 
   return { getNFTForProperty, nftData, loading, error };

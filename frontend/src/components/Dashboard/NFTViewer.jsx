@@ -1,42 +1,44 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useAppKitAccount } from "@reown/appkit/react";
-import useGetNFTForProperty from "../../hooks/Properties/useGetNFTForProperty";
-import useAllProperties from "../../hooks/Properties/useAllProperties";
-import { Building, MapPin, User, Share2, DollarSign, Clock, ChevronRight } from 'lucide-react';
+"use client"
+
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { useAppKitAccount } from "@reown/appkit/react"
+import useGetNFTForProperty from "../../hooks/Properties/useGetNFTForProperty"
+import useAllProperties from "../../hooks/Properties/useAllProperties"
+import { Building, MapPin, User, Share2, Clock, ChevronRight } from "lucide-react"
 
 const NFTViewer = () => {
-  const [userNFTs, setUserNFTs] = useState([]);
-  const [selectedNFT, setSelectedNFT] = useState(null);
-  const [view, setView] = useState("grid");
-  const { address, isConnected } = useAppKitAccount();
-  const { getNFTForProperty, loading: nftLoading, error: nftError } = useGetNFTForProperty();
-  const { properties, loading: propertiesLoading, error: propertiesError } = useAllProperties();
+  const [userNFTs, setUserNFTs] = useState([])
+  const [selectedNFT, setSelectedNFT] = useState(null)
+  const [view, setView] = useState("grid")
+  const { address, isConnected } = useAppKitAccount()
+  const { getNFTForProperty, loading: nftLoading, error: nftError } = useGetNFTForProperty()
+  const { properties, loading: propertiesLoading, error: propertiesError } = useAllProperties()
 
   useEffect(() => {
     const fetchUserNFTs = async () => {
-      if (!isConnected || !properties || !address) return;
+      if (!isConnected || !properties || !address) return
 
       const nftPromises = properties.map(async (property) => {
-        const nftData = await getNFTForProperty(property.id, address);
-        if (nftData) {
+        const nftData = await getNFTForProperty(property.id, address)
+        if (nftData && nftData.tokenId !== "0") {
           return {
             nftData,
             property,
-          };
+          }
         }
-        return null;
-      });
+        return null
+      })
 
-      const nfts = await Promise.all(nftPromises);
-      setUserNFTs(nfts.filter((nft) => nft !== null));
-    };
+      const nfts = await Promise.all(nftPromises)
+      setUserNFTs(nfts.filter((nft) => nft !== null))
+    }
 
-    fetchUserNFTs();
-  }, [isConnected, properties, address, getNFTForProperty]);
+    fetchUserNFTs()
+  }, [isConnected, properties, address, getNFTForProperty])
 
   if (!isConnected) {
     return (
@@ -52,7 +54,7 @@ const NFTViewer = () => {
           </CardContent>
         </Card>
       </div>
-    );
+    )
   }
 
   if (nftLoading || propertiesLoading) {
@@ -62,7 +64,7 @@ const NFTViewer = () => {
         <h3 className="text-xl font-semibold">Loading Your NFTs</h3>
         <p className="text-gray-600">Please wait while we fetch your property NFTs...</p>
       </div>
-    );
+    )
   }
 
   if (nftError || propertiesError) {
@@ -75,11 +77,13 @@ const NFTViewer = () => {
             </div>
             <h2 className="text-2xl font-bold">Error Loading NFTs</h2>
             <p className="text-gray-600">{nftError || propertiesError}</p>
-            <Button className="mt-4" onClick={() => window.location.reload()}>Retry</Button>
+            <Button className="mt-4" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
           </CardContent>
         </Card>
       </div>
-    );
+    )
   }
 
   return (
@@ -90,18 +94,10 @@ const NFTViewer = () => {
           <p className="text-gray-600 mt-2">Manage your property ownership tokens</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant={view === "grid" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setView("grid")}
-          >
+          <Button variant={view === "grid" ? "default" : "outline"} size="sm" onClick={() => setView("grid")}>
             Grid
           </Button>
-          <Button
-            variant={view === "list" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setView("list")}
-          >
+          <Button variant={view === "list" ? "default" : "outline"} size="sm" onClick={() => setView("list")}>
             List
           </Button>
         </div>
@@ -170,7 +166,7 @@ const NFTViewer = () => {
                         <p className="text-sm text-gray-500">Ownership Share</p>
                         <p className="text-lg font-semibold flex items-center">
                           <Share2 className="w-4 h-4 mr-1" />
-                          {nft.nftData.shares || "0"} Tokens
+                          {nft.nftData.shares} Tokens
                         </p>
                       </div>
                     </div>
@@ -182,7 +178,6 @@ const NFTViewer = () => {
         </div>
       )}
 
-      {/* NFT Details Modal/Sidebar */}
       <AnimatePresence>
         {selectedNFT && (
           <>
@@ -231,7 +226,7 @@ const NFTViewer = () => {
                     <Card>
                       <CardContent className="pt-6">
                         <p className="text-sm text-gray-500">Ownership</p>
-                        <p className="text-lg font-semibold">{selectedNFT.nftData.shares || "0"} Tokens</p>
+                        <p className="text-lg font-semibold">{selectedNFT.nftData.shares} Tokens</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -247,27 +242,18 @@ const NFTViewer = () => {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Purchase Date</span>
-                          <span className="font-medium">
-                            {new Date().toLocaleDateString()}
-                          </span>
+                          <span className="font-medium">{selectedNFT.property.creationTimestamp}</span>
                         </div>
+                      
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Rental Income PerShare</span>
-                          <span className="font-medium">
-                            {selectedNFT.property.accumulatedRentalIncomePerShare || "0.00"} ETH
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Price PerShare</span>
-                          <span className="font-medium">
-                            {selectedNFT.property.pricePerShare || "0.00"} ETH
-                          </span>
+                          <span className="text-gray-600">Price Per Share</span>
+                          <span className="font-medium">{selectedNFT.property.pricePerShare} XFI</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Next Payout</span>
                           <span className="font-medium flex items-center">
                             <Clock className="w-4 h-4 mr-1" />
-                            In 30 days
+                            {selectedNFT.property.lastRentalUpdate}
                           </span>
                         </div>
                       </div>
@@ -280,7 +266,8 @@ const NFTViewer = () => {
         )}
       </AnimatePresence>
     </div>
-  );
-};
+  )
+}
 
-export default NFTViewer;
+export default NFTViewer
+
