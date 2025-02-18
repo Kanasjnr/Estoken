@@ -73,6 +73,6 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 For any queries or support, please contact us at:
 
-- Email: support@estoken.io
+- Email:estoken22@gmail.com
 
 Built with ❤️ by the Estoken Team
