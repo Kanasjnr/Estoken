@@ -89,16 +89,10 @@ export function PropertyCard({ property }) {
             <Home className="h-5 w-5 mr-2 text-primary" />
             <div>
               <p className="text-xs text-muted-foreground">Price per Share</p>
-              <p className="text-sm font-semibold">{property.pricePerShare} ETH</p>
+              <p className="text-sm font-semibold">{property.pricePerShare} XFI</p>
             </div>
           </div>
-          <div className="flex items-center">
-            <Coins className="h-5 w-5 mr-2 text-primary" />
-            <div>
-              <p className="text-xs text-muted-foreground">Rental Yield</p>
-              <p className="text-sm font-semibold">{property.accumulatedRentalIncomePerShare} ETH</p>
-            </div>
-          </div>
+          
         </div>
       </CardContent>
 

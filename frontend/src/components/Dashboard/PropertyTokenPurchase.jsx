@@ -76,7 +76,7 @@ const PropertyTokenPurchase = () => {
       const userFriendlyError = error.message.includes("insufficient funds")
         ? "Error: Insufficient funds in your wallet."
         : error.message.includes("gas")
-          ? "Error: Gas limit too low or insufficient ETH for gas."
+          ? "Error: Gas limit too low or insufficient XFI for gas."
           : `Error: ${error.message}`
 
       console.log(userFriendlyError)
@@ -121,7 +121,7 @@ const PropertyTokenPurchase = () => {
                 className="w-full h-48 object-cover rounded-md mb-4"
               />
               <p className="text-sm text-gray-600 mb-2">{prop.description}</p>
-              <p className="font-semibold">Price per token: {prop.pricePerShare} ETH</p>
+              <p className="font-semibold">Price per token: {prop.pricePerShare} XFI</p>
               <p>Available tokens: {prop.availableShares}</p>
             </CardContent>
           </Card>
@@ -156,8 +156,8 @@ const PropertyTokenPurchase = () => {
               <p className="text-sm text-gray-600">
                 Total Cost:{" "}
                 {purchaseAmount && property?.pricePerShare
-                  ? `${(Number(purchaseAmount) * Number((property.pricePerShare))).toFixed(4)} ETH`
-                  : "0 ETH"}
+                  ? `${(Number(purchaseAmount) * Number((property.pricePerShare))).toFixed(4)} XFI`
+                  : "0 XFI"}
               </p>
             </div>
           </CardContent>

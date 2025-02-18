@@ -56,9 +56,7 @@ export function KYCVerificationList() {
     )
   }
 
-  if (getPendingError || getDetailsError) {
-    return <div className="text-red-500">Error loading KYC data</div>
-  }
+ 
 
   return (
     <div>

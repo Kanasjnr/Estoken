@@ -27,7 +27,7 @@ export const ESTokenProvider = ({ children }) => {
 
   useEffect(() => {
     if (!isInitialized) {
-      toast.warn("Please connect to Base Sepolia Testnet to use this application");
+      toast.warn("Please connect to CrossFi Testnet to use this application");
     }
   }, [isInitialized]);
 

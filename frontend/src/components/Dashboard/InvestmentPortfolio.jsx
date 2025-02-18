@@ -1,86 +1,50 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import useAllProperties from "../../hooks/Properties/useAllProperties";
+"use client"
 
-const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"];
+import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
+import { BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import useAllProperties from "../../hooks/Properties/useAllProperties"
+
+const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"]
 
 const InvestmentPortfolio = () => {
-  const { properties, loading, error } = useAllProperties();
-  const [portfolio, setPortfolio] = useState([]);
-  const [rentalLogs, setRentalLogs] = useState([]);
+  const { properties, loading, error } = useAllProperties()
+  const [portfolio, setPortfolio] = useState([])
   const [summary, setSummary] = useState({
     totalProperties: 0,
     activeTokens: 0,
     totalAvailableShares: 0,
     totalValueLocked: 0,
-    monthlyIncome: 0,
-  });
+    monthlyRentalIncome: 0,
+  })
 
   useEffect(() => {
     if (Array.isArray(properties)) {
-      setPortfolio(properties);
+      setPortfolio(properties)
 
-      const totalProperties = properties.length;
-      const activeTokens = properties.reduce(
-        (acc, property) => acc + Number(property.totalShares || 0),
-        0
-      );
-      const totalAvailableShares = properties.reduce(
-        (acc, property) => acc + Number(property.availableShares || 0),
-        0
-      );
+      const totalProperties = properties.length
+      const activeTokens = properties.reduce((acc, property) => acc + Number(property.totalShares || 0), 0)
+      const totalAvailableShares = properties.reduce((acc, property) => acc + Number(property.availableShares || 0), 0)
       const totalValueLocked = properties.reduce(
-        (acc, property) =>
-          acc +
-          Number(property.totalShares || 0) *
-            Number.parseFloat(property.pricePerShare || 0),
-        0
-      );
-      const monthlyIncome = properties.reduce(
-        (acc, property) =>
-          acc +
-          Number(property.accumulatedRentalIncomePerShare || 0) *
-            Number(property.totalShares || 0),
-        0
-      );
+        (acc, property) => acc + Number(property.totalShares || 0) * Number.parseFloat(property.pricePerShare || 0),
+        0,
+      )
+      const monthlyRentalIncome = properties.reduce(
+        (acc, property) => acc + Number.parseFloat(property.monthlyRentalIncome || 0),
+        0,
+      )
 
       setSummary({
         totalProperties,
         activeTokens,
         totalAvailableShares,
         totalValueLocked,
-        monthlyIncome,
-      });
-
-      // Log monthly rentals for each property
-      properties.forEach((property) => {
-        console.log(`Property: ${property.name}`);
-        console.log(`Monthly Rental Income:`, property.monthlyRentalIncome);
-      });
-
-      // Prepare rental logs for visualization
-      const rentalIncomeData = properties.map((property) => ({
-        id: property.id,
-        name: property.name,
-        rentalIncomeLogs: property.monthlyRentalIncome || [], // Use monthlyRentalIncome here
-      }));
-      setRentalLogs(rentalIncomeData);
+        monthlyRentalIncome,
+      })
     }
-  }, [properties]);
+  }, [properties])
 
   if (loading) {
     return (
@@ -98,7 +62,7 @@ const InvestmentPortfolio = () => {
           </Card>
         ))}
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -109,25 +73,23 @@ const InvestmentPortfolio = () => {
           <p>Error loading properties: {error}</p>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   const barChartData = portfolio.map((property) => ({
     name: property.name,
     value: Number(property.totalShares),
-  }));
+  }))
 
   const pieChartData = portfolio.map((property) => ({
     name: property.name,
-    value: Number(property.pricePerShare),
-  }));
+    value: Number.parseFloat(property.pricePerShare),
+  }))
 
   return (
     <div className="p-6 space-y-8 bg-white min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        Investment Portfolio
-      </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">Investment Portfolio</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {[
           {
             title: "Total Properties",
@@ -146,12 +108,12 @@ const InvestmentPortfolio = () => {
           },
           {
             title: "Total Value Locked",
-            value: `${summary.totalValueLocked.toFixed(2)} ETH`,
+            value: `${summary.totalValueLocked.toFixed(2)} XFI`,
             color: "bg-purple-500",
           },
           {
             title: "Monthly Rental Income",
-            value: `0.04 ETH`,
+            value: `${summary.monthlyRentalIncome.toFixed(2)} XFI`,
             color: "bg-red-500",
           },
         ].map((item, index) => (
@@ -163,14 +125,10 @@ const InvestmentPortfolio = () => {
           >
             <Card>
               <CardHeader className="space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">
-                  {item.title}
-                </CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">{item.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-800">
-                  {item.value}
-                </div>
+                <div className="text-2xl font-bold text-gray-800">{item.value}</div>
                 <div className={`h-2 w-full mt-2 rounded-full ${item.color}`} />
               </CardContent>
             </Card>
@@ -205,9 +163,7 @@ const InvestmentPortfolio = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-gray-800">
-              Property Value Distribution
-            </CardTitle>
+            <CardTitle className="text-gray-800">Property Value Distribution</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-80">
@@ -223,10 +179,7 @@ const InvestmentPortfolio = () => {
                     dataKey="value"
                   >
                     {pieChartData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -242,7 +195,8 @@ const InvestmentPortfolio = () => {
         </Card>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default InvestmentPortfolio;
+export default InvestmentPortfolio
+

@@ -16,7 +16,7 @@ export function RentalIncome() {
   const { isConnected } = useAppKitAccount()
   const { claimRentalIncome, loading: claimLoading } = useClaimRentalIncome()
   const { calculateRentalIncome, loading: calculateLoading } = useCalculateRentalIncome()
-  const { getAllProperties, loading: propertiesLoading, propertiesError, properties } = useAllProperties()
+  const { getAllProperties, loading: propertiesLoading, error: propertiesError, properties } = useAllProperties()
 
   const fetchProperties = useCallback(async () => {
     try {
@@ -45,8 +45,8 @@ export function RentalIncome() {
               propertyId: property.id,
               propertyName: property.name,
               amount: rentalIncome,
-              lastUpdate: property.lastRentalUpdate || "N/A",
-              accumulatedIncomePerShare: property.accumulatedRentalIncomePerShare || "0.0",
+              lastUpdate: property.lastRentalUpdate,
+              accumulatedIncomePerShare: property.accumulatedRentalIncomePerShare,
             }
           }),
         )
@@ -79,7 +79,7 @@ export function RentalIncome() {
         }
       } catch (err) {
         console.error("Error claiming rental income:", err)
-       
+        // Error handling is done in the hook, so we don't need to do anything here
       }
     },
     [isConnected, claimLoading, claimRentalIncome, fetchProperties],
@@ -106,10 +106,9 @@ export function RentalIncome() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-gray-600">Property</TableHead>
-                <TableHead className="text-gray-600">Claimable Amount (ETH)</TableHead>
+                <TableHead className="text-gray-600">Claimable Amount (XFI)</TableHead>
                 <TableHead className="text-gray-600">Last Update</TableHead>
-                <TableHead className="text-gray-600">Income Per Share (ETH)</TableHead>
-                <TableHead className="text-gray-600">Action</TableHead> {/* Fixed: Changed </TableRow> to </TableHead> */}
+                <TableHead className="text-gray-600">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -129,9 +128,8 @@ export function RentalIncome() {
                 memoizedRentalIncomes.map((income) => (
                   <TableRow key={income.id}>
                     <TableCell className="font-medium text-gray-800">{income.propertyName}</TableCell>
-                    <TableCell className="text-gray-600">{income.amount} ETH</TableCell>
+                    <TableCell className="text-gray-600">{income.amount} XFI</TableCell>
                     <TableCell className="text-gray-600">{income.lastUpdate}</TableCell>
-                    <TableCell className="text-gray-600">{income.accumulatedIncomePerShare} ETH</TableCell>
                     <TableCell>
                       <Button
                         onClick={() => handleClaim(income.propertyId)}
@@ -159,3 +157,4 @@ export function RentalIncome() {
 }
 
 export default React.memo(RentalIncome)
+

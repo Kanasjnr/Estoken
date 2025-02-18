@@ -15,14 +15,22 @@ const useTokenizeProperty = () => {
   const { contract } = useContract(contractAddress, ABI)
 
   const tokenizeProperty = useCallback(
-    async (name, location, description, imageUrls, totalShares, pricePerShare, initialValuation, totalRentalIncome) => {
+    async (
+      name,
+      location,
+      description,
+      imageUrls,
+      totalShares,
+      pricePerShare,
+      initialValuation,
+      monthlyRentalIncome,
+    ) => {
       if (!address || !isConnected) {
         toast.error("Please connect your wallet")
         return
       }
 
       if (!contract) {
-        // toast.error("Contract is not available")
         return
       }
 
@@ -34,13 +42,13 @@ const useTokenizeProperty = () => {
           throw new Error("Invalid imageUrls: Must be an array of strings.")
         }
 
-        if (!pricePerShare || !initialValuation || !totalRentalIncome) {
-          throw new Error("Price per share, initial valuation, and total rental income must be provided.")
+        if (!pricePerShare || !initialValuation || !monthlyRentalIncome) {
+          throw new Error("Price per share, initial valuation, and monthly rental income must be provided.")
         }
 
         const pricePerShareInWei = ethers.parseUnits(pricePerShare.toString(), "ether")
         const initialValuationInWei = ethers.parseUnits(initialValuation.toString(), "ether")
-        const totalRentalIncomeInWei = ethers.parseUnits(totalRentalIncome.toString(), "ether")
+        const monthlyRentalIncomeInWei = ethers.parseUnits(monthlyRentalIncome.toString(), "ether")
 
         const tx = await contract.tokenizeProperty(
           name,
@@ -50,7 +58,7 @@ const useTokenizeProperty = () => {
           totalShares,
           pricePerShareInWei,
           initialValuationInWei,
-          totalRentalIncomeInWei,
+          monthlyRentalIncomeInWei,
         )
 
         const receipt = await tx.wait()
