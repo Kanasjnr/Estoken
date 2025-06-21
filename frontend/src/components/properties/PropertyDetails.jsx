@@ -3,10 +3,12 @@
 import { useParams } from "react-router-dom"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import useGetProperty from "../../hooks/Properties/useGetProperty"
+import usePropertyWithOracle from "../../hooks/Properties/usePropertyWithOracle"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Coins, DollarSign, TrendingUp, ArrowUpDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { MapPin, Coins, DollarSign, TrendingUp, ArrowUpDown, ChevronLeft, ChevronRight, Calendar, RefreshCw, Zap, AlertCircle } from "lucide-react"
 
 const Loader = () => (
   <div className="flex justify-center items-center h-screen">
@@ -16,8 +18,23 @@ const Loader = () => (
 
 export function PropertyDetails() {
   const { id } = useParams()
-  const { property, totalRentalIncome, loading, error } = useGetProperty(id)
+  const { 
+    property, 
+    totalRentalIncome, 
+    loading, 
+    propertyError, 
+    requestPropertyValuationUpdate,
+    oracleLoading,
+    autoUpdateEnabled,
+    setAutoUpdateEnabled,
+    propertyEvents,
+    getPropertyOracleStatus,
+    lastOracleUpdate
+  } = usePropertyWithOracle(id)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  
+  const oracleStatus = getPropertyOracleStatus()
+  const error = propertyError
 
   const nextImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex + 1) % (property?.imageUrls?.length || 1))
@@ -140,11 +157,20 @@ export function PropertyDetails() {
             </div>
              {/* Monthly Rental Income */}
           <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-              <DollarSign className="h-5 w-5 text-primary" />
-              <div className="ml-3">
-                <p className="text-sm text-gray-500">Monthly Rental Income</p>
-                <p className="text-lg font-medium text-gray-800">{property.monthlyRentalIncome} XFI</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                <DollarSign className="h-5 w-5 text-primary" />
+                <div className="ml-3">
+                  <p className="text-sm text-gray-500">Monthly Rental Income</p>
+                  <p className="text-lg font-medium text-gray-800">{property.monthlyRentalIncome} XFI</p>
+                </div>
+              </div>
+              <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <div className="ml-3">
+                  <p className="text-sm text-gray-500">Total Rental Income</p>
+                  <p className="text-lg font-medium text-gray-800">{totalRentalIncome} XFI</p>
+                </div>
               </div>
             </div>
           </div>
@@ -176,13 +202,109 @@ export function PropertyDetails() {
          
 
           {/* Active Status */}
-          <div className="p-4">
+          <div className="p-4 border-b border-gray-200">
             <Badge
               variant={property.isActive ? "default" : "secondary"}
               className="text-lg px-4 py-1 font-semibold rounded"
             >
               {property.isActive ? "Active" : "Inactive"}
             </Badge>
+          </div>
+
+          {/* Oracle Section */}
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                <Zap className="h-5 w-5 mr-2 text-yellow-500" />
+                Oracle Valuation
+              </h3>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">Auto-update</span>
+                <Switch
+                  checked={autoUpdateEnabled}
+                  onCheckedChange={setAutoUpdateEnabled}
+                />
+              </div>
+            </div>
+
+            {/* Oracle Status */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="flex items-center border border-gray-200 rounded-lg p-3">
+                {oracleStatus.hasPendingRequests ? (
+                  <RefreshCw className="h-4 w-4 text-blue-500 animate-spin mr-2" />
+                ) : (
+                  <TrendingUp className="h-4 w-4 text-green-500 mr-2" />
+                )}
+                <div>
+                  <p className="text-xs text-gray-500">Oracle Status</p>
+                  <p className="text-sm font-medium">
+                    {oracleStatus.hasPendingRequests ? 'Updating...' : 'Ready'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center border border-gray-200 rounded-lg p-3">
+                <Calendar className="h-4 w-4 text-gray-500 mr-2" />
+                <div>
+                  <p className="text-xs text-gray-500">Last Update</p>
+                  <p className="text-sm font-medium">
+                    {lastOracleUpdate 
+                      ? new Date(lastOracleUpdate).toLocaleString()
+                      : 'Never'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Oracle Actions */}
+            <div className="flex space-x-2">
+              <Button
+                onClick={requestPropertyValuationUpdate}
+                disabled={oracleLoading || !oracleStatus.canRequestUpdate}
+                className="flex items-center"
+              >
+                {oracleLoading ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Request Update
+              </Button>
+              
+              {oracleStatus.failedRequests.length > 0 && (
+                <div className="flex items-center text-red-500">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  <span className="text-sm">
+                    {oracleStatus.failedRequests.length} failed request(s)
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Recent Oracle Events */}
+            {propertyEvents.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Oracle Activity</h4>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {propertyEvents.slice(0, 3).map((event, index) => (
+                    <div key={index} className="text-xs p-2 bg-gray-50 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{event.name}</span>
+                        <span className="text-gray-500">
+                          {new Date(event.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      {event.name === 'PropertyValuationUpdated' && event.args.newValuation && (
+                        <div className="text-gray-600 mt-1">
+                          New valuation: {(Number(event.args.newValuation) / 1e18).toFixed(4)} XFI
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

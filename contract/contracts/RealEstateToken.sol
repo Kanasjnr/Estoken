@@ -330,6 +330,14 @@ contract RealEstateToken is ERC1155, Ownable {
         _propertyInfo[propertyId].currentValuation = newValuation;
     }
 
+    function updateRentalIncome(
+        uint256 propertyId,
+        uint256 newRentalIncome
+    ) public onlyOwner {
+        require(_propertyExists(propertyId), "Property does not exist");
+        _propertyInfo[propertyId].monthlyRentalIncome = newRentalIncome;
+    }
+
     function updateTokenBalance(
         uint256 propertyId,
         address account,
