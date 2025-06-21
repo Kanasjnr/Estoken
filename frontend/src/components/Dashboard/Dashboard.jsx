@@ -4,6 +4,7 @@ import Header from "../Header";
 import DashboardContent from "./DashboardContent";
 import PropertyListing from "./PropertyListing";
 import PropertyTokenization from "./PropertyTokenization";
+import PropertyManagement from "../PropertyManagement";
 import RentalIncome from "../RentalIncome";
 import Marketplace from "../Marketplace";
 import Notifications from "./Notifications";
@@ -20,6 +21,8 @@ function Dashboard() {
         return <PropertyListing />;
       case "tokenization":
         return <PropertyTokenization />;
+      case "management":
+        return <PropertyManagement />;
       case "rental":
         return <RentalIncome />;
       case "marketplace":

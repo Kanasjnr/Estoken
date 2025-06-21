@@ -253,7 +253,7 @@ const NFTViewer = () => {
                           <span className="text-gray-600">Next Payout</span>
                           <span className="font-medium flex items-center">
                             <Clock className="w-4 h-4 mr-1" />
-                            {selectedNFT.property.lastRentalUpdate}
+                            30 days
                           </span>
                         </div>
                       </div>

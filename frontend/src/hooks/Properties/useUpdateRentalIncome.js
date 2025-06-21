@@ -28,7 +28,7 @@ const useUpdateRentalIncome = () => {
       setError(null)
 
       try {
-        const totalRentalIncomeInWei = ethers.utils.parseEther(totalRentalIncome.toString())
+        const totalRentalIncomeInWei = ethers.parseEther(totalRentalIncome.toString())
         const tx = await contract.updateRentalIncome(propertyId, totalRentalIncomeInWei)
         const receipt = await tx.wait()
 

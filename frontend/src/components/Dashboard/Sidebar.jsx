@@ -4,12 +4,13 @@ import React from "react"
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Building, Coins, BarChart2, ShoppingCart, Menu, UserCheck, Image } from "lucide-react"
+import { LayoutDashboard, Building, Coins, BarChart2, ShoppingCart, Menu, UserCheck, Image, Settings } from "lucide-react"
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Building, label: "Properties", path: "/dashboard/properties" },
   { icon: Coins, label: "Tokenization", path: "/dashboard/tokenization" },
+  { icon: Settings, label: "Management", path: "/dashboard/management" },
   { icon: BarChart2, label: "Rental Income", path: "/dashboard/rental" },
   { icon: ShoppingCart, label: "Marketplace", path: "/dashboard/marketplace" },
   { icon: Image, label: "My NFTs", path: "/dashboard/nfts" },

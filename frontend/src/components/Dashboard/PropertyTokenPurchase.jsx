@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react"
 import useAllProperties from "../../hooks/Properties/useAllProperties"
-import useGetProperty from "../../hooks/Properties/useGetProperty"
+import usePropertyWithOracle from "../../hooks/Properties/usePropertyWithOracle"
 import useBuyTokens from "../../hooks/Properties/useBuyTokenShares"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle,CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import { Zap, TrendingUp, AlertCircle, Clock } from "lucide-react"
 import { ethers } from "ethers"
 
 const PropertyTokenPurchase = () => {
@@ -20,7 +22,13 @@ const PropertyTokenPurchase = () => {
     error: propertiesError,
     refetch: refetchProperties,
   } = useAllProperties()
-  const { property, getProperty } = useGetProperty(selectedProperty)
+  const { 
+    property, 
+    oracleData,
+    getPropertyOracleStatus,
+    lastOracleUpdate,
+    loading: propertyLoading 
+  } = usePropertyWithOracle(selectedProperty)
   const { buyTokens, loading: buyLoading, error: buyError } = useBuyTokens()
 
   useEffect(() => {
@@ -121,8 +129,14 @@ const PropertyTokenPurchase = () => {
                 className="w-full h-48 object-cover rounded-md mb-4"
               />
               <p className="text-sm text-gray-600 mb-2">{prop.description}</p>
-              <p className="font-semibold">Price per token: {prop.pricePerShare} XFI</p>
-              <p>Available tokens: {prop.availableShares}</p>
+              <div className="space-y-1">
+                <p className="font-semibold">Price per token: {prop.pricePerShare} XFI</p>
+                <p>Available tokens: {prop.availableShares}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-sm text-gray-500">Current Valuation:</span>
+                  <span className="text-sm font-medium">{prop.currentValuation} XFI</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -131,8 +145,22 @@ const PropertyTokenPurchase = () => {
       {selectedProperty && property && (
         <Card className="mt-8">
           <CardHeader>
-            <CardTitle>Purchase Tokens for {property.name}</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Purchase Tokens for {property.name}</span>
+              {lastOracleUpdate && (
+                <Badge variant="outline" className="flex items-center">
+                  <Zap className="h-3 w-3 mr-1" />
+                  Oracle Updated
+                </Badge>
+              )}
+            </CardTitle>
             <CardDescription>Enter the number of tokens you want to purchase</CardDescription>
+            {lastOracleUpdate && (
+              <div className="flex items-center text-sm text-gray-500 mt-2">
+                <Clock className="h-4 w-4 mr-1" />
+                Last valuation update: {new Date(lastOracleUpdate).toLocaleString()}
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="flex flex-col space-y-4">

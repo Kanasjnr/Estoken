@@ -4,13 +4,18 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import useAllProperties from "../../hooks/Properties/useAllProperties"
+import { useOracleEvents } from "../../hooks/Properties"
+import { Zap, TrendingUp, Clock, RefreshCw } from "lucide-react"
 
 const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"]
 
 const InvestmentPortfolio = () => {
   const { properties, loading, error } = useAllProperties()
+  const { events: oracleEvents, refreshEvents } = useOracleEvents()
   const [portfolio, setPortfolio] = useState([])
   const [summary, setSummary] = useState({
     totalProperties: 0,
@@ -18,6 +23,7 @@ const InvestmentPortfolio = () => {
     totalAvailableShares: 0,
     totalValueLocked: 0,
     monthlyRentalIncome: 0,
+    recentOracleUpdates: 0,
   })
 
   useEffect(() => {
@@ -36,12 +42,19 @@ const InvestmentPortfolio = () => {
         0,
       )
 
+      // Calculate recent Oracle updates (last 24 hours)
+      const recentOracleUpdates = oracleEvents.filter(event => 
+        event.name === 'PropertyValuationUpdated' && 
+        (new Date() - new Date(event.timestamp)) < 24 * 60 * 60 * 1000
+      ).length
+
       setSummary({
         totalProperties,
         activeTokens,
         totalAvailableShares,
         totalValueLocked,
         monthlyRentalIncome,
+        recentOracleUpdates,
       })
     }
   }, [properties])
@@ -88,7 +101,13 @@ const InvestmentPortfolio = () => {
 
   return (
     <div className="p-6 space-y-8 bg-white min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Investment Portfolio</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Investment Portfolio</h1>
+        <Button onClick={refreshEvents} variant="outline" className="flex items-center">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Oracle Data
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {[
           {
@@ -116,6 +135,12 @@ const InvestmentPortfolio = () => {
             value: `${summary.monthlyRentalIncome.toFixed(2)} XFI`,
             color: "bg-red-500",
           },
+          {
+            title: "Oracle Updates (24h)",
+            value: summary.recentOracleUpdates,
+            color: "bg-yellow-500",
+            icon: Zap,
+          },
         ].map((item, index) => (
           <motion.div
             key={index}
@@ -128,8 +153,17 @@ const InvestmentPortfolio = () => {
                 <CardTitle className="text-sm font-medium text-gray-500">{item.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-800">{item.value}</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-2xl font-bold text-gray-800">{item.value}</div>
+                  {item.icon && <item.icon className="h-6 w-6 text-yellow-500" />}
+                </div>
                 <div className={`h-2 w-full mt-2 rounded-full ${item.color}`} />
+                {item.title === "Oracle Updates (24h)" && summary.recentOracleUpdates > 0 && (
+                  <Badge variant="outline" className="mt-2 text-xs">
+                    <TrendingUp className="h-3 w-3 mr-1" />
+                    Active Updates
+                  </Badge>
+                )}
               </CardContent>
             </Card>
           </motion.div>
