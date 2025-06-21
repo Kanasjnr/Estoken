@@ -2,25 +2,25 @@ import { createAppKit } from "@reown/appkit/react";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import { defineChain } from "@reown/appkit/networks";
 
-const crossFiTestnet = defineChain({
-  id: 4157,
-  caipNetworkId: "eip155:4157",
+const celoAlfajores = defineChain({
+  id: 44787,
+  caipNetworkId: "eip155:44787",
   chainNamespace: "eip155",
-  name: "CrossFi Testnet",
+  name: "Celo Alfajores Testnet",
   nativeCurrency: {
     decimals: 18,
-    name: "XFI",
-    symbol: "XFI",
+    name: "CELO",
+    symbol: "CELO",
   },
   rpcUrls: {
     default: {
-      http: [import.meta.env.VITE_APP_CROSSFI_RPC_URL],
+      http: ["https://alfajores-forno.celo-mainnet.org"],
     },
   },
   blockExplorers: {
     default: {
-      name: "XFI Scan",
-      url: import.meta.env.VITE_APP_CROSSFI_EXPLORER_URL,
+      name: "Celo Explorer",
+      url: "https://explorer.celo.org/alfajores",
     },
   },
   contracts: {
@@ -45,16 +45,16 @@ const metadata = {
 // 4. Create a AppKit instance
 export const appkit = createAppKit({
   adapters: [new EthersAdapter()],
-  networks: [crossFiTestnet],
+  networks: [celoAlfajores],
   chainImages: {
-    [crossFiTestnet.id]:
-      "https://s2.coinmarketcap.com/static/img/coins/64x64/26202.png",
+    [celoAlfajores.id]:
+      "https://s2.coinmarketcap.com/static/img/coins/64x64/5567.png",
   },
   metadata,
   projectId,
   allowUnsupportedChain: false,
   allWallets: "SHOW",
-  defaultNetwork: crossFiTestnet,
+  defaultNetwork: celoAlfajores,
   enableEIP6963: true,
   themeVariables: {
     '--w3m-color-mix': '#1c1917',
