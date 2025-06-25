@@ -278,7 +278,7 @@ const PropertyTokenization = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="pricePerShare" className="text-lg font-semibold text-gray-700">
-                        Price Per Share (XFI)
+                        Price Per Share (ETH)
                       </Label>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
@@ -297,7 +297,7 @@ const PropertyTokenization = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="initialValuation" className="text-lg font-semibold text-gray-700">
-                        Initial Valuation (XFI)
+                        Initial Valuation (ETH)
                       </Label>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
@@ -316,7 +316,7 @@ const PropertyTokenization = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="monthlyRentalIncome" className="text-lg font-semibold text-gray-700">
-                        Monthly Rental Income (XFI)
+                        Monthly Rental Income (ETH)
                       </Label>
                       <div className="relative">
                         <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />

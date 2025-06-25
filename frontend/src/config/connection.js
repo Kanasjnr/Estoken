@@ -2,25 +2,25 @@ import { createAppKit } from "@reown/appkit/react";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import { defineChain } from "@reown/appkit/networks";
 
-const celoAlfajores = defineChain({
-  id: 44787,
-  caipNetworkId: "eip155:44787",
+const baseSepolia = defineChain({
+  id: 84532,
+  caipNetworkId: "eip155:84532",
   chainNamespace: "eip155",
-  name: "Celo Alfajores Testnet",
+  name: "Base Sepolia Testnet",
   nativeCurrency: {
     decimals: 18,
-    name: "CELO",
-    symbol: "CELO",
+    name: "Ether",
+    symbol: "ETH",
   },
   rpcUrls: {
     default: {
-      http: ["https://alfajores-forno.celo-mainnet.org"],
+      http: ["https://sepolia.base.org"],
     },
   },
   blockExplorers: {
     default: {
-      name: "Celo Explorer",
-      url: "https://explorer.celo.org/alfajores",
+      name: "BaseScan",
+      url: "https://sepolia.basescan.org",
     },
   },
   contracts: {
@@ -32,7 +32,7 @@ const celoAlfajores = defineChain({
 const projectId = import.meta.env.VITE_APP_APPKIT_PROJECT_ID;
 
 // 2. Set the networks
-// const networks = [crossFiTestnet, sepolia];
+// Using Base Sepolia Testnet
 
 // 3. Create a metadata object - optional
 const metadata = {
@@ -45,16 +45,16 @@ const metadata = {
 // 4. Create a AppKit instance
 export const appkit = createAppKit({
   adapters: [new EthersAdapter()],
-  networks: [celoAlfajores],
+  networks: [baseSepolia],
   chainImages: {
-    [celoAlfajores.id]:
-      "https://s2.coinmarketcap.com/static/img/coins/64x64/5567.png",
+    [baseSepolia.id]:
+      "https://s2.coinmarketcap.com/static/img/coins/64x64/7226.png",
   },
   metadata,
   projectId,
   allowUnsupportedChain: false,
   allWallets: "SHOW",
-  defaultNetwork: celoAlfajores,
+  defaultNetwork: baseSepolia,
   enableEIP6963: true,
   themeVariables: {
     '--w3m-color-mix': '#1c1917',

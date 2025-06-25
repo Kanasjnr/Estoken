@@ -24,6 +24,7 @@ export { default as useCalculateDividends } from "./useCalculateDividends";
 
 // Oracle Integration Hooks
 export { default as useRequestValuationUpdate } from "./useRequestValuationUpdate";
+export { default as useCanRequestValuation } from "./useCanRequestValuation";
 export { default as useOracleStatus } from "./useOracleStatus";
 export { default as useOracleEvents } from "./useOracleEvents";
 export { default as useOracleAdmin } from "./useOracleAdmin";

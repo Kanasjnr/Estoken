@@ -127,12 +127,12 @@ const InvestmentPortfolio = () => {
           },
           {
             title: "Total Value Locked",
-            value: `${summary.totalValueLocked.toFixed(2)} XFI`,
+            value: `${summary.totalValueLocked.toFixed(2)} ETH`,
             color: "bg-purple-500",
           },
           {
             title: "Monthly Rental Income",
-            value: `${summary.monthlyRentalIncome.toFixed(2)} XFI`,
+            value: `${summary.monthlyRentalIncome.toFixed(2)} ETH`,
             color: "bg-red-500",
           },
           {

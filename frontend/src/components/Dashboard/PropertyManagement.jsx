@@ -35,12 +35,25 @@ const PropertyManagement = () => {
     size: "2000"
   });
 
-  const { properties, loading: propertiesLoading } = useAllProperties();
-  const { property, loading: propertyLoading } = useGetProperty(selectedPropertyId);
+  const { properties, loading: propertiesLoading, error: propertiesError } = useAllProperties();
+  const { property } = useGetProperty(selectedPropertyId);
   const { updateProperty, loading: updateLoading } = useUpdateProperty();
   const { updatePropertyValuation, loading: valuationLoading } = useUpdatePropertyValuation();
   const { updateRentalIncome, loading: rentalLoading } = useUpdateRentalIncome();
   const { requestValuationUpdate, loading: oracleLoading } = useRequestValuationUpdate();
+
+  // Debug logging
+  useEffect(() => {
+    console.log("PropertyManagement Debug:", {
+      propertiesLoading,
+      propertiesError,
+      properties,
+      propertiesCount: properties?.length || 0,
+      contractAddress: import.meta.env.VITE_APP_REAL_ESTATE_TOKEN_ADDRESS,
+      chainId: import.meta.env.VITE_CHAIN_ID,
+      allEnvVars: import.meta.env
+    });
+  }, [propertiesLoading, propertiesError, properties]);
 
   // Update form when property is selected
   useEffect(() => {
@@ -117,6 +130,47 @@ const PropertyManagement = () => {
       <div className="flex items-center justify-center p-8">
         <RefreshCw className="h-6 w-6 animate-spin mr-2" />
         Loading properties...
+      </div>
+    );
+  }
+
+  if (propertiesError) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center mb-6">
+          <Building className="h-8 w-8 mr-3 text-blue-500" />
+          <h1 className="text-3xl font-bold text-gray-900">Property Management</h1>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <div className="text-red-500 mb-2">Error loading properties</div>
+              <div className="text-sm text-gray-600">{propertiesError}</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!properties || properties.length === 0) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center mb-6">
+          <Building className="h-8 w-8 mr-3 text-blue-500" />
+          <h1 className="text-3xl font-bold text-gray-900">Property Management</h1>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <Building className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Properties Found</h3>
+              <p className="text-gray-600">
+                No properties are currently available for management. Please tokenize some properties first.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

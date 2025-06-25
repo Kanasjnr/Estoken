@@ -138,21 +138,21 @@ export function PropertyDetails() {
               <DollarSign className="h-5 w-5 text-primary" />
               <div className="ml-3">
                 <p className="text-sm text-gray-500">Price Per Share</p>
-                <p className="text-lg font-medium text-gray-800">{property.pricePerShare} XFI</p>
+                <p className="text-lg font-medium text-gray-800">{property.pricePerShare} ETH</p>
               </div>
             </div>
             <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
               <TrendingUp className="h-5 w-5 text-primary" />
               <div className="ml-3">
                 <p className="text-sm text-gray-500">Initial Valuation</p>
-                <p className="text-lg font-medium text-gray-800">{property.initialValuation} XFI</p>
+                <p className="text-lg font-medium text-gray-800">{property.initialValuation} ETH</p>
               </div>
             </div>
             <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
               <ArrowUpDown className="h-5 w-5 text-primary" />
               <div className="ml-3">
                 <p className="text-sm text-gray-500">Current Valuation</p>
-                <p className="text-lg font-medium text-gray-800">{property.currentValuation} XFI</p>
+                <p className="text-lg font-medium text-gray-800">{property.currentValuation} ETH</p>
               </div>
             </div>
              {/* Monthly Rental Income */}
@@ -162,14 +162,14 @@ export function PropertyDetails() {
                 <DollarSign className="h-5 w-5 text-primary" />
                 <div className="ml-3">
                   <p className="text-sm text-gray-500">Monthly Rental Income</p>
-                  <p className="text-lg font-medium text-gray-800">{property.monthlyRentalIncome} XFI</p>
+                  <p className="text-lg font-medium text-gray-800">{property.monthlyRentalIncome} ETH</p>
                 </div>
               </div>
               <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                 <TrendingUp className="h-5 w-5 text-primary" />
                 <div className="ml-3">
                   <p className="text-sm text-gray-500">Total Rental Income</p>
-                  <p className="text-lg font-medium text-gray-800">{totalRentalIncome} XFI</p>
+                  <p className="text-lg font-medium text-gray-800">{totalRentalIncome} ETH</p>
                 </div>
               </div>
             </div>
@@ -178,7 +178,7 @@ export function PropertyDetails() {
               <DollarSign className="h-5 w-5 text-primary" />
               <div className="ml-3">
                 <p className="text-sm text-gray-500">Accumulated Rental Income Per Share</p>
-                <p className="text-lg font-medium text-gray-800">{property.accumulatedRentalIncomePerShare} XFI</p>
+                <p className="text-lg font-medium text-gray-800">{property.accumulatedRentalIncomePerShare} ETH</p>
               </div>
             </div> */}
             <div className="flex items-center border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">

@@ -55,9 +55,37 @@ const useRequestValuationUpdate = () => {
         }
       } catch (err) {
         console.error("Error requesting valuation update:", err);
-        toast.error(`Error: ${err.message || "An unknown error occurred."}`);
-        setError(err.message);
-        throw err;
+        
+        let errorMessage = "An unknown error occurred.";
+        
+        // Handle specific custom errors
+        const errorData = err.data || err.code || "";
+        const errorMessage_full = err.message || "";
+        
+        if (errorData.includes("0x71e83137") || errorMessage_full.includes("0x71e83137")) {
+          errorMessage = "You don't have permission to request valuation updates for this property. Only property token holders can request updates.";
+        } else if (errorData.includes("0x8254fc8a") || errorMessage_full.includes("0x8254fc8a")) {
+          errorMessage = "⏰ Cooldown Active: Please wait before requesting another valuation update. There's a 1-hour cooldown period between requests.";
+        } else if (err.message.includes("NotPropertyHolder")) {
+          errorMessage = "You must own tokens of this property to request valuation updates.";
+        } else if (err.message.includes("RequestTooSoon")) {
+          errorMessage = "Please wait before requesting another valuation update (1 hour cooldown).";
+        } else if (err.message.includes("PropertyNotFound")) {
+          errorMessage = "Property not found.";
+        } else if (err.reason) {
+          errorMessage = err.reason;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
+        toast.error(`Error: ${errorMessage}`);
+        setError(errorMessage);
+        
+        // Create a custom error with the user-friendly message
+        const customError = new Error(errorMessage);
+        customError.isHandled = true;
+        customError.originalError = err;
+        throw customError;
       } finally {
         setLoading(false);
       }

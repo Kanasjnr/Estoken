@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import useContract from "../useContract";
+import useSignerOrProvider from "../useSignerOrProvider";
 import OracleABI from "../../abis/RealEstateOracle.json";
 
 const useOracleEvents = () => {
@@ -11,9 +12,20 @@ const useOracleEvents = () => {
   
   const contractAddress = import.meta.env.VITE_APP_REAL_ESTATE_ORACLE_ADDRESS;
   const { contract } = useContract(contractAddress, OracleABI);
+  const { signer, provider, readOnlyProvider } = useSignerOrProvider();
 
   const fetchRecentEvents = useCallback(async (fromBlock = -1000) => {
-    if (!contract) {
+    // Check if we have a contract and at least one provider
+    const availableProvider = signer?.provider || provider || readOnlyProvider;
+    
+    if (!contract || !availableProvider) {
+      console.log('Contract or provider not available for events', {
+        contract: !!contract,
+        signer: !!signer,
+        provider: !!provider,
+        readOnlyProvider: !!readOnlyProvider,
+        contractAddress
+      });
       return;
     }
 
@@ -27,7 +39,7 @@ const useOracleEvents = () => {
         toBlock: 'latest'
       };
 
-      const logs = await contract.provider.getLogs(filter);
+      const logs = await availableProvider.getLogs(filter);
       const parsedEvents = [];
 
       for (const log of logs) {
@@ -52,10 +64,13 @@ const useOracleEvents = () => {
     } finally {
       setLoading(false);
     }
-  }, [contract, contractAddress]);
+  }, [contract, contractAddress, signer, provider, readOnlyProvider]);
 
   const setupEventListeners = useCallback(() => {
-    if (!contract) return;
+    if (!contract) {
+      console.log('Contract not available for event listeners');
+      return;
+    }
 
     const handlePropertyValuationRequested = (propertyId, requestId, event) => {
       const newEvent = {
@@ -90,25 +105,34 @@ const useOracleEvents = () => {
       setEvents(prev => [newEvent, ...prev]);
     };
 
-    // Set up event listeners
-    contract.on('PropertyValuationRequested', handlePropertyValuationRequested);
-    contract.on('PropertyValuationUpdated', handlePropertyValuationUpdated);
-    contract.on('RequestFailed', handleRequestFailed);
+    try {
+      // Set up event listeners
+      contract.on('PropertyValuationRequested', handlePropertyValuationRequested);
+      contract.on('PropertyValuationUpdated', handlePropertyValuationUpdated);
+      contract.on('RequestFailed', handleRequestFailed);
 
-    // Cleanup function
-    return () => {
-      contract.off('PropertyValuationRequested', handlePropertyValuationRequested);
-      contract.off('PropertyValuationUpdated', handlePropertyValuationUpdated);
-      contract.off('RequestFailed', handleRequestFailed);
-    };
+      // Cleanup function
+      return () => {
+        contract.off('PropertyValuationRequested', handlePropertyValuationRequested);
+        contract.off('PropertyValuationUpdated', handlePropertyValuationUpdated);
+        contract.off('RequestFailed', handleRequestFailed);
+      };
+    } catch (error) {
+      console.error('Error setting up event listeners:', error);
+      return () => {};
+    }
   }, [contract]);
 
   useEffect(() => {
-    const cleanup = setupEventListeners();
-    fetchRecentEvents();
+    let cleanup;
+    
+    if (contract && (signer || provider || readOnlyProvider)) {
+      cleanup = setupEventListeners();
+      fetchRecentEvents();
+    }
 
     return cleanup;
-  }, [setupEventListeners, fetchRecentEvents]);
+  }, [contract, signer, provider, readOnlyProvider, setupEventListeners, fetchRecentEvents]);
 
   return { 
     events, 
