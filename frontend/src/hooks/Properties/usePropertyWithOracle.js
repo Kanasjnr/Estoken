@@ -52,6 +52,32 @@ const usePropertyWithOracle = (propertyId) => {
       return result;
     } catch (error) {
       console.error("Error requesting valuation update:", error);
+      
+      // If the error was already handled by the useRequestValuationUpdate hook, don't show another toast
+      if (error.isHandled) {
+        // Just re-throw without additional processing
+        throw error;
+      }
+      
+      let errorMessage = "Failed to request valuation update.";
+      
+      // Handle specific custom errors
+      const errorData = error.data || error.code || "";
+      const errorMessage_full = error.message || "";
+      
+      if (errorData.includes("0x71e83137") || errorMessage_full.includes("0x71e83137")) {
+        errorMessage = "You don't have permission to request valuation updates for this property. Only property token holders can request updates.";
+      } else if (errorData.includes("0x8254fc8a") || errorMessage_full.includes("0x8254fc8a")) {
+        errorMessage = "⏰ Cooldown Active: Please wait before requesting another valuation update. There's a 1-hour cooldown period between requests.";
+      } else if (error.message.includes("NotPropertyHolder")) {
+        errorMessage = "You must own tokens of this property to request valuation updates.";
+      } else if (error.message.includes("RequestTooSoon")) {
+        errorMessage = "Please wait before requesting another valuation update (1 hour cooldown).";
+      } else if (error.message.includes("PropertyNotFound")) {
+        errorMessage = "Property not found.";
+      }
+      
+      toast.error(errorMessage);
       throw error;
     }
   }, [property, propertyId, address, isConnected, requestValuationUpdate, refreshEvents, refreshStatus]);
@@ -113,6 +139,8 @@ const usePropertyWithOracle = (propertyId) => {
       console.log(`Auto-requesting valuation update for property ${propertyId}`);
       requestPropertyValuationUpdate().catch(error => {
         console.error("Auto valuation update failed:", error);
+        // Don't show additional error messages for auto-updates since they're already handled
+        // in the requestPropertyValuationUpdate function
       });
     }
   }, [shouldAutoUpdate, propertyId, requestPropertyValuationUpdate]);

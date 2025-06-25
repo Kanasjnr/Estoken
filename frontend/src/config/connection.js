@@ -2,25 +2,25 @@ import { createAppKit } from "@reown/appkit/react";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import { defineChain } from "@reown/appkit/networks";
 
-const crossFiTestnet = defineChain({
-  id: 4157,
-  caipNetworkId: "eip155:4157",
+const baseSepolia = defineChain({
+  id: 84532,
+  caipNetworkId: "eip155:84532",
   chainNamespace: "eip155",
-  name: "CrossFi Testnet",
+  name: "Base Sepolia Testnet",
   nativeCurrency: {
     decimals: 18,
-    name: "XFI",
-    symbol: "XFI",
+    name: "Ether",
+    symbol: "ETH",
   },
   rpcUrls: {
     default: {
-      http: [import.meta.env.VITE_APP_CROSSFI_RPC_URL],
+      http: ["https://sepolia.base.org"],
     },
   },
   blockExplorers: {
     default: {
-      name: "XFI Scan",
-      url: import.meta.env.VITE_APP_CROSSFI_EXPLORER_URL,
+      name: "BaseScan",
+      url: "https://sepolia.basescan.org",
     },
   },
   contracts: {
@@ -32,7 +32,7 @@ const crossFiTestnet = defineChain({
 const projectId = import.meta.env.VITE_APP_APPKIT_PROJECT_ID;
 
 // 2. Set the networks
-// const networks = [crossFiTestnet, sepolia];
+// Using Base Sepolia Testnet
 
 // 3. Create a metadata object - optional
 const metadata = {
@@ -45,16 +45,16 @@ const metadata = {
 // 4. Create a AppKit instance
 export const appkit = createAppKit({
   adapters: [new EthersAdapter()],
-  networks: [crossFiTestnet],
+  networks: [baseSepolia],
   chainImages: {
-    [crossFiTestnet.id]:
-      "https://s2.coinmarketcap.com/static/img/coins/64x64/26202.png",
+    [baseSepolia.id]:
+      "https://s2.coinmarketcap.com/static/img/coins/64x64/7226.png",
   },
   metadata,
   projectId,
   allowUnsupportedChain: false,
   allWallets: "SHOW",
-  defaultNetwork: crossFiTestnet,
+  defaultNetwork: baseSepolia,
   enableEIP6963: true,
   themeVariables: {
     '--w3m-color-mix': '#1c1917',

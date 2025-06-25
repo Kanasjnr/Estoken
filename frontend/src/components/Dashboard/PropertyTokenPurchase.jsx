@@ -130,11 +130,11 @@ const PropertyTokenPurchase = () => {
               />
               <p className="text-sm text-gray-600 mb-2">{prop.description}</p>
               <div className="space-y-1">
-                <p className="font-semibold">Price per token: {prop.pricePerShare} XFI</p>
+                <p className="font-semibold">Price per token: {prop.pricePerShare} ETH</p>
                 <p>Available tokens: {prop.availableShares}</p>
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-sm text-gray-500">Current Valuation:</span>
-                  <span className="text-sm font-medium">{prop.currentValuation} XFI</span>
+                  <span className="text-sm font-medium">{prop.currentValuation} ETH</span>
                 </div>
               </div>
             </CardContent>
@@ -184,8 +184,8 @@ const PropertyTokenPurchase = () => {
               <p className="text-sm text-gray-600">
                 Total Cost:{" "}
                 {purchaseAmount && property?.pricePerShare
-                  ? `${(Number(purchaseAmount) * Number((property.pricePerShare))).toFixed(4)} XFI`
-                  : "0 XFI"}
+                  ? `${(Number(purchaseAmount) * Number((property.pricePerShare))).toFixed(4)} ETH`
+                  : "0 ETH"}
               </p>
             </div>
           </CardContent>

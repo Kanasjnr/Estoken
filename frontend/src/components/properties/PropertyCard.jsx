@@ -89,7 +89,7 @@ export function PropertyCard({ property }) {
             <Home className="h-5 w-5 mr-2 text-primary" />
             <div>
               <p className="text-xs text-muted-foreground">Price per Share</p>
-              <p className="text-sm font-semibold">{property.pricePerShare} XFI</p>
+              <p className="text-sm font-semibold">{property.pricePerShare} ETH</p>
             </div>
           </div>
           

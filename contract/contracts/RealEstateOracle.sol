@@ -35,6 +35,12 @@ contract RealEstateOracle is FunctionsClient, Ownable {
     mapping(bytes32 => uint256) public requestToPropertyId;
     mapping(bytes32 => RequestType) public requestToType;
     
+    // Mapping to track request cooldowns
+    mapping(uint256 => uint256) public lastRequestTime;
+    
+    // Cooldown period in seconds (1 hour)
+    uint256 public constant REQUEST_COOLDOWN = 3600;
+    
     enum RequestType {
         VALUATION_UPDATE,
         RENTAL_INCOME_UPDATE
@@ -46,6 +52,11 @@ contract RealEstateOracle is FunctionsClient, Ownable {
     event RentalIncomeRequested(uint256 indexed propertyId, bytes32 indexed requestId);
     event RentalIncomeUpdated(uint256 indexed propertyId, uint256 oldIncome, uint256 newIncome);
     event RequestFailed(bytes32 indexed requestId, bytes error);
+
+    // Custom errors
+    error NotPropertyHolder();
+    error RequestTooSoon();
+    error PropertyNotFound();
 
     // JavaScript code to fetch real estate data
     string public constant VALUATION_SOURCE = 
@@ -73,6 +84,27 @@ contract RealEstateOracle is FunctionsClient, Ownable {
     }
 
     /**
+     * @notice Check if caller can request valuation updates for a property
+     * @param propertyId The property ID to check
+     */
+    modifier canRequestValuation(uint256 propertyId) {
+        // Allow owner or property token holders to request valuation
+        if (msg.sender != owner()) {
+            uint256 balance = realEstateToken.balanceOf(msg.sender, propertyId);
+            if (balance == 0) {
+                revert NotPropertyHolder();
+            }
+        }
+        
+        // Check cooldown
+        if (lastRequestTime[propertyId] + REQUEST_COOLDOWN > block.timestamp) {
+            revert RequestTooSoon();
+        }
+        
+        _;
+    }
+
+    /**
      * @notice Request property valuation update from off-chain APIs
      * @param propertyId The ID of the property to update
      * @param location Property location for API query
@@ -82,7 +114,13 @@ contract RealEstateOracle is FunctionsClient, Ownable {
         uint256 propertyId,
         string memory location,
         string memory size
-    ) external onlyOwner {
+    ) external canRequestValuation(propertyId) {
+        // Verify property exists
+        try realEstateToken.getPropertyInfo(propertyId) returns (RealEstateToken.PropertyInfo memory) {
+            // Property exists, continue
+        } catch {
+            revert PropertyNotFound();
+        }
         FunctionsRequest.Request memory req;
         req.initializeRequestForInlineJavaScript(VALUATION_SOURCE);
         
@@ -100,6 +138,7 @@ contract RealEstateOracle is FunctionsClient, Ownable {
 
         requestToPropertyId[s_lastRequestId] = propertyId;
         requestToType[s_lastRequestId] = RequestType.VALUATION_UPDATE;
+        lastRequestTime[propertyId] = block.timestamp;
 
         emit PropertyValuationRequested(propertyId, s_lastRequestId);
     }
@@ -168,5 +207,28 @@ contract RealEstateOracle is FunctionsClient, Ownable {
      */
     function getLatestError() external view returns (bytes memory) {
         return s_lastError;
+    }
+
+    /**
+     * @notice Check if a user can request valuation for a property
+     * @param user The user address
+     * @param propertyId The property ID
+     * @return canRequest True if user can request valuation
+     */
+    function canUserRequestValuation(address user, uint256 propertyId) external view returns (bool canRequest) {
+        if (user == owner()) {
+            return true;
+        }
+        
+        uint256 balance = realEstateToken.balanceOf(user, propertyId);
+        if (balance == 0) {
+            return false;
+        }
+        
+        if (lastRequestTime[propertyId] + REQUEST_COOLDOWN > block.timestamp) {
+            return false;
+        }
+        
+        return true;
     }
 } 

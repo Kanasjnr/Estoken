@@ -1,17 +1,13 @@
-import { ethers } from "hardhat";
+import { ethers, run } from "hardhat";
 
 async function main() {
   console.log("Deploying RealEstateOracle contract...");
 
-  // Chainlink Functions configuration for Sepolia testnet
-  // You'll need to update these values for your specific network and subscription
-  const ROUTER_ADDRESS = "0x53BA5D8E5aab0cf9589aCE139666Be2b9Fd268e2"; // Celo alfajores Functions Router
-  const DON_ID = "0x66756e2d63656c6f2d616c66616a6f7265732d31000000000000000000000000"; //  DON ID
-  const SUBSCRIPTION_ID = 124; // Replace with your actual subscription ID
+  const ROUTER_ADDRESS = "0xf9B8fc078197181C841c296C876945aaa425B278"; // base sepolia Functions Router
+  const DON_ID = "0x66756e2d626173652d7365706f6c69612d310000000000000000000000000000"; //  DON ID
+  const SUBSCRIPTION_ID = 349; 
   
-  // First, get the deployed RealEstateToken contract address
-  // You should replace this with your actual deployed contract address
-  const REAL_ESTATE_TOKEN_ADDRESS = "0xb736fe83AB4a6dDEBa2630c0a766fA71bb5f3871"; // Replace with your RealEstateToken address
+  const REAL_ESTATE_TOKEN_ADDRESS = "0x67152ce69B4b522bc1e8FA676e3806C0B52dC059"; 
 
   // Deploy RealEstateOracle
   const RealEstateOracle = await ethers.getContractFactory("RealEstateOracle");
@@ -32,7 +28,7 @@ async function main() {
   console.log("RealEstateToken Address:", REAL_ESTATE_TOKEN_ADDRESS);
 
   // Verify the contract on Etherscan (optional)
-  if (process.env.ETHERSCAN_API_KEY) {
+  if (process.env.BASESCAN_API_KEY) {
     console.log("Waiting for block confirmations...");
     await oracle.deploymentTransaction()?.wait(6);
     
