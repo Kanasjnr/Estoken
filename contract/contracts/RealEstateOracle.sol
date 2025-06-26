@@ -58,19 +58,111 @@ contract RealEstateOracle is FunctionsClient, Ownable {
     error RequestTooSoon();
     error PropertyNotFound();
 
-    // JavaScript code to fetch real estate data
     string public constant VALUATION_SOURCE = 
-        "const location = args[0];"
-        "const size = args[1];"
-        "const apiResponse = await Functions.makeHttpRequest({"
-        "  url: 'https://api.realestate-data.com/valuation',"
-        "  method: 'POST',"
-        "  headers: { 'Content-Type': 'application/json' },"
-        "  data: { location: location, size: parseInt(size) }"
-        "});"
-        "if (apiResponse.error) throw Error('Request failed');"
-        "const valuation = apiResponse.data.estimated_value || 500000;"
-        "return Functions.encodeUint256(Math.floor(valuation));";
+        "const location = args[0] || 'Unknown';"
+        "const size = args[1] || '2000';"
+        "const apiKey = args[2] || '9fa2e8368be548aebeae5566d8d9ac51';"
+        "console.log(`Requesting valuation for: ${location}, Size: ${size}`);"
+        ""
+        "// RentCast API endpoint for property value estimate"
+        "const valueUrl = 'https://api.rentcast.io/v1/avm/value';"
+        ""
+        "try {"
+        "  // Parse the location to extract address components"
+        "  const addressParts = location.split(',').map(part => part.trim());"
+        "  let address, city, state, zipCode;"
+        "  if (addressParts.length >= 3) {"
+        "    address = addressParts[0];"
+        "    city = addressParts[1];"
+        "    state = addressParts[2];"
+        "    if (addressParts.length >= 4) {"
+        "      zipCode = addressParts[3];"
+        "    }"
+        "  } else {"
+        "    address = location;"
+        "    city = 'New York';"
+        "    state = 'NY';"
+        "  }"
+        ""
+        "  // Build query parameters for RentCast API"
+        "  const params = new URLSearchParams({"
+        "    address: address,"
+        "    city: city,"
+        "    state: state"
+        "  });"
+        "  if (zipCode) params.append('zipCode', zipCode);"
+        ""
+        "  const sizeNum = parseInt(size, 10);"
+        "  if (sizeNum && sizeNum > 0) {"
+        "    params.append('squareFootage', sizeNum.toString());"
+        "  }"
+        ""
+        "  const options = {"
+        "    method: 'GET',"
+        "    headers: {"
+        "      'X-Api-Key': apiKey"
+        "    }"
+        "  };"
+        ""
+        "  console.log(`Making request to: ${valueUrl}?${params.toString()}`);"
+        "  const response = await Functions.makeHttpRequest({"
+        "    url: `${valueUrl}?${params.toString()}`,"
+        "    ...options"
+        "  });"
+        ""
+        "  if (response.error) {"
+        "    console.log(`API Error: ${response.error}`);"
+        "    throw new Error(`API request failed: ${response.error}`);"
+        "  }"
+        ""
+        "  const data = response.data;"
+        "  console.log(`API Response:`, JSON.stringify(data));"
+        ""
+        "  let valuation = 0;"
+        "  if (data) {"
+        "    valuation = data.value || data.price || data.estimate || 0;"
+        "    console.log(`Found API valuation: ${valuation}`);"
+        "  }"
+        ""
+        "  // If no valuation found, try property records endpoint as fallback"
+        "  if (valuation === 0) {"
+        "    console.log('No AVM valuation found, trying property records...');"
+        "    const propertiesUrl = 'https://api.rentcast.io/v1/properties';"
+        "    const propResponse = await Functions.makeHttpRequest({"
+        "      url: `${propertiesUrl}?${params.toString()}`,"
+        "      ...options"
+        "    });"
+        "    "
+        "    if (propResponse.data && propResponse.data.length > 0) {"
+        "      const property = propResponse.data[0];"
+        "      valuation = property.lastSalePrice || property.assessedValue || 0;"
+        "      console.log(`Found property record valuation: ${valuation}`);"
+        "    }"
+        "  }"
+        ""
+        "  // If still no valuation found, calculate fallback based on size and location"
+        "  if (valuation === 0) {"
+        "    console.log('No API valuation found, using fallback calculation');"
+        "    const sizeNum = parseInt(size, 10) || 2000;"
+        "    let basePricePerSqFt = 300;"
+        "    if (state === 'CA' || state === 'NY') basePricePerSqFt = 500;"
+        "    else if (state === 'TX' || state === 'FL') basePricePerSqFt = 250;"
+        "    else if (state === 'OH' || state === 'IN') basePricePerSqFt = 150;"
+        "    valuation = Math.floor(sizeNum * basePricePerSqFt);"
+        "  }"
+        ""
+        "  console.log(`Final valuation: ${valuation}`);"
+        "  const finalVal = Math.floor(Number(valuation));"
+        "  console.log(`Encoded final valuation: ${finalVal}`);"
+        "  return Functions.encodeUint256(finalVal);"
+        ""
+        "} catch (error) {"
+        "  console.log(`Error: ${error.message || error}`);"
+        "  const sizeNum = parseInt(size, 10) || 2000;"
+        "  const fallbackVal = Math.floor(sizeNum * 300);"
+        "  console.log(`Using fallback valuation: ${fallbackVal}`);"
+        "  return Functions.encodeUint256(fallbackVal);"
+        "}";
 
     constructor(
         address router,
@@ -105,9 +197,9 @@ contract RealEstateOracle is FunctionsClient, Ownable {
     }
 
     /**
-     * @notice Request property valuation update from off-chain APIs
+     * @notice Request property valuation update using default API key
      * @param propertyId The ID of the property to update
-     * @param location Property location for API query
+     * @param location Property location for API query (format: "123 Main St, New York, NY, 10001")
      * @param size Property size in square feet
      */
     function requestValuationUpdate(
@@ -115,18 +207,52 @@ contract RealEstateOracle is FunctionsClient, Ownable {
         string memory location,
         string memory size
     ) external canRequestValuation(propertyId) {
+        _requestValuationUpdate(propertyId, location, size, "");
+    }
+
+    /**
+     * @notice Request property valuation update from off-chain APIs (with custom API key)
+     * @param propertyId The ID of the property to update
+     * @param location Property location for API query (format: "123 Main St, New York, NY, 10001")
+     * @param size Property size in square feet
+     * @param apiKey API key for the real estate data provider
+     */
+    function requestValuationUpdateWithKey(
+        uint256 propertyId,
+        string memory location,
+        string memory size,
+        string memory apiKey
+    ) external canRequestValuation(propertyId) {
+        _requestValuationUpdate(propertyId, location, size, apiKey);
+    }
+
+    /**
+     * @notice Internal function to request property valuation update
+     * @param propertyId The ID of the property to update
+     * @param location Property location for API query
+     * @param size Property size in square feet
+     * @param apiKey API key for the real estate data provider (empty string uses default)
+     */
+    function _requestValuationUpdate(
+        uint256 propertyId,
+        string memory location,
+        string memory size,
+        string memory apiKey
+    ) internal {
         // Verify property exists
         try realEstateToken.getPropertyInfo(propertyId) returns (RealEstateToken.PropertyInfo memory) {
             // Property exists, continue
         } catch {
             revert PropertyNotFound();
         }
+        
         FunctionsRequest.Request memory req;
         req.initializeRequestForInlineJavaScript(VALUATION_SOURCE);
         
-        string[] memory args = new string[](2);
+        string[] memory args = new string[](3);
         args[0] = location;
         args[1] = size;
+        args[2] = apiKey;
         req.setArgs(args);
 
         s_lastRequestId = _sendRequest(
@@ -157,6 +283,9 @@ contract RealEstateOracle is FunctionsClient, Ownable {
         if (err.length > 0) {
             s_lastError = err;
             emit RequestFailed(requestId, err);
+            // Clean up mappings
+            delete requestToPropertyId[requestId];
+            delete requestToType[requestId];
             return;
         }
 
@@ -164,17 +293,23 @@ contract RealEstateOracle is FunctionsClient, Ownable {
         uint256 propertyId = requestToPropertyId[requestId];
         RequestType requestType = requestToType[requestId];
 
-        if (requestType == RequestType.VALUATION_UPDATE) {
-            uint256 newValuation = abi.decode(response, (uint256));
-            RealEstateToken.PropertyInfo memory propertyInfo = realEstateToken.getPropertyInfo(propertyId);
-            uint256 oldValuation = propertyInfo.currentValuation;
-            
-            realEstateToken.updatePropertyValuation(propertyId, newValuation);
-            emit PropertyValuationUpdated(propertyId, oldValuation, newValuation);
-        }
-        
+        // Clean up mappings early to prevent stuck requests
         delete requestToPropertyId[requestId];
         delete requestToType[requestId];
+
+        if (requestType == RequestType.VALUATION_UPDATE && propertyId > 0) {
+            uint256 newValuation = abi.decode(response, (uint256));
+            
+            // Try to get property info and update
+            try realEstateToken.getPropertyInfo(propertyId) returns (RealEstateToken.PropertyInfo memory propertyInfo) {
+                uint256 oldValuation = propertyInfo.currentValuation;
+                realEstateToken.updatePropertyValuation(propertyId, newValuation);
+                emit PropertyValuationUpdated(propertyId, oldValuation, newValuation);
+            } catch {
+                // If property operations fail, emit failure event
+                emit RequestFailed(requestId, abi.encode("Property update failed"));
+            }
+        }
     }
 
     /**

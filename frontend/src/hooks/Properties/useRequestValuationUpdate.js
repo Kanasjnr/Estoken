@@ -14,7 +14,7 @@ const useRequestValuationUpdate = () => {
   const { contract } = useContract(contractAddress, OracleABI);
 
   const requestValuationUpdate = useCallback(
-    async (propertyId, location, size) => {
+    async (propertyId, location, size, customApiKey = null) => {
       if (!address || !isConnected) {
         toast.error("Please connect your wallet");
         return;
@@ -29,7 +29,16 @@ const useRequestValuationUpdate = () => {
       setError(null);
 
       try {
-        const tx = await contract.requestValuationUpdate(propertyId, location, size);
+        // Use the appropriate function based on whether a custom API key is provided
+        let tx;
+        if (customApiKey && customApiKey.trim()) {
+          // Use custom API key function
+          tx = await contract.requestValuationUpdateWithKey(propertyId, location, size, customApiKey);
+        } else {
+          // Use default API key function
+          tx = await contract.requestValuationUpdate(propertyId, location, size);
+        }
+        
         const receipt = await tx.wait();
 
         if (receipt.status === 1) {
@@ -58,18 +67,12 @@ const useRequestValuationUpdate = () => {
         
         let errorMessage = "An unknown error occurred.";
         
-        // Handle specific custom errors
+        // Handle specific custom errors - only admin-related errors now
         const errorData = err.data || err.code || "";
         const errorMessage_full = err.message || "";
         
-        if (errorData.includes("0x71e83137") || errorMessage_full.includes("0x71e83137")) {
-          errorMessage = "You don't have permission to request valuation updates for this property. Only property token holders can request updates.";
-        } else if (errorData.includes("0x8254fc8a") || errorMessage_full.includes("0x8254fc8a")) {
-          errorMessage = "⏰ Cooldown Active: Please wait before requesting another valuation update. There's a 1-hour cooldown period between requests.";
-        } else if (err.message.includes("NotPropertyHolder")) {
-          errorMessage = "You must own tokens of this property to request valuation updates.";
-        } else if (err.message.includes("RequestTooSoon")) {
-          errorMessage = "Please wait before requesting another valuation update (1 hour cooldown).";
+        if (errorData.includes("Ownable: caller is not the owner") || errorMessage_full.includes("Ownable: caller is not the owner")) {
+          errorMessage = "Only admin can request valuation updates.";
         } else if (err.message.includes("PropertyNotFound")) {
           errorMessage = "Property not found.";
         } else if (err.reason) {

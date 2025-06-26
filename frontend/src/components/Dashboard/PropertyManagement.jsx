@@ -13,11 +13,9 @@ import {
   useAllProperties, 
   useGetProperty, 
   useUpdateProperty,
-  useUpdatePropertyValuation,
-  useUpdateRentalIncome,
-  useRequestValuationUpdate
+  usePropertyAutomation
 } from "../../hooks/Properties";
-import { Building, DollarSign, Edit3, RefreshCw, Zap } from "lucide-react";
+import { Building, Edit3, RefreshCw, Bot, Settings } from "lucide-react";
 
 const PropertyManagement = () => {
   const [selectedPropertyId, setSelectedPropertyId] = useState("");
@@ -28,19 +26,21 @@ const PropertyManagement = () => {
     pricePerShare: "",
     isActive: true
   });
-  const [valuationUpdate, setValuationUpdate] = useState("");
-  const [rentalIncomeUpdate, setRentalIncomeUpdate] = useState("");
-  const [oracleParams, setOracleParams] = useState({
-    location: "",
-    size: "2000"
-  });
+
+  const [autoUpdateEnabled, setAutoUpdateEnabledState] = useState(false);
+  const [needsUpdate, setNeedsUpdate] = useState(false);
 
   const { properties, loading: propertiesLoading, error: propertiesError } = useAllProperties();
   const { property } = useGetProperty(selectedPropertyId);
   const { updateProperty, loading: updateLoading } = useUpdateProperty();
-  const { updatePropertyValuation, loading: valuationLoading } = useUpdatePropertyValuation();
-  const { updateRentalIncome, loading: rentalLoading } = useUpdateRentalIncome();
-  const { requestValuationUpdate, loading: oracleLoading } = useRequestValuationUpdate();
+  
+  // Add automation hook
+  const {
+    setAutoUpdateEnabled,
+    isAutoUpdateEnabled,
+    shouldUpdateProperty,
+    loading: automationLoading
+  } = usePropertyAutomation();
 
   // Debug logging
   useEffect(() => {
@@ -65,12 +65,38 @@ const PropertyManagement = () => {
         pricePerShare: property.pricePerShare || "",
         isActive: property.isActive || true
       });
-      setOracleParams({
-        location: property.location || "",
-        size: property.description?.match(/(\d+)\s*sq\s*ft/i)?.[1] || "2000"
-      });
+
+      
+      // Check automation status for selected property
+      checkAutomationStatus();
     }
-  }, [property]);
+  }, [property, selectedPropertyId]);
+  
+  const checkAutomationStatus = async () => {
+    if (!selectedPropertyId) return;
+    
+    try {
+      const [enabled, shouldUpdate] = await Promise.all([
+        isAutoUpdateEnabled(selectedPropertyId),
+        shouldUpdateProperty(selectedPropertyId)
+      ]);
+      setAutoUpdateEnabledState(enabled);
+      setNeedsUpdate(shouldUpdate);
+    } catch (error) {
+      console.error('Error checking automation status:', error);
+    }
+  };
+
+  const handleToggleAutomation = async (enabled) => {
+    if (!selectedPropertyId) return;
+    
+    try {
+      await setAutoUpdateEnabled(selectedPropertyId, enabled);
+      setAutoUpdateEnabledState(enabled);
+    } catch (error) {
+      console.error('Error toggling automation:', error);
+    }
+  };
 
   const handleUpdateProperty = async () => {
     if (!selectedPropertyId || !updateForm.name || !updateForm.pricePerShare) return;
@@ -89,41 +115,7 @@ const PropertyManagement = () => {
     }
   };
 
-  const handleUpdateValuation = async () => {
-    if (!selectedPropertyId || !valuationUpdate) return;
-    
-    try {
-      await updatePropertyValuation(selectedPropertyId, valuationUpdate);
-      setValuationUpdate("");
-    } catch (error) {
-      console.error("Failed to update valuation:", error);
-    }
-  };
 
-  const handleUpdateRentalIncome = async () => {
-    if (!selectedPropertyId || !rentalIncomeUpdate) return;
-    
-    try {
-      await updateRentalIncome(selectedPropertyId, rentalIncomeUpdate);
-      setRentalIncomeUpdate("");
-    } catch (error) {
-      console.error("Failed to update rental income:", error);
-    }
-  };
-
-  const handleOracleValuationRequest = async () => {
-    if (!selectedPropertyId || !oracleParams.location) return;
-    
-    try {
-      await requestValuationUpdate(
-        selectedPropertyId, 
-        oracleParams.location, 
-        oracleParams.size
-      );
-    } catch (error) {
-      console.error("Failed to request Oracle valuation:", error);
-    }
-  };
 
   if (propertiesLoading) {
     return (
@@ -243,7 +235,7 @@ const PropertyManagement = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="pricePerShare">Price Per Share (XFI)</Label>
+                <Label htmlFor="pricePerShare">Price Per Share (ETH)</Label>
                 <Input
                   id="pricePerShare"
                   type="number"
@@ -273,101 +265,50 @@ const PropertyManagement = () => {
             </CardContent>
           </Card>
 
-          {/* Valuation and Rental Updates */}
+
+
+          {/* Property Automation */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <DollarSign className="h-5 w-5 mr-2" />
-                Financial Updates
+                <Bot className="h-5 w-5 mr-2 text-purple-600" />
+                Property Automation
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Manual Valuation Update */}
-              <div className="space-y-2">
-                <Label htmlFor="valuation">Update Valuation (XFI)</Label>
-                <div className="flex space-x-2">
-                  <Input
-                    id="valuation"
-                    type="number"
-                    step="0.0001"
-                    value={valuationUpdate}
-                    onChange={(e) => setValuationUpdate(e.target.value)}
-                    placeholder="New valuation"
-                  />
-                  <Button 
-                    onClick={handleUpdateValuation}
-                    disabled={valuationLoading || !valuationUpdate}
-                  >
-                    {valuationLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : "Update"}
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-500">
-                  Current: {property.currentValuation} XFI
-                </p>
-              </div>
-
-              {/* Rental Income Update */}
-              <div className="space-y-2">
-                <Label htmlFor="rental">Update Monthly Rental Income (XFI)</Label>
-                <div className="flex space-x-2">
-                  <Input
-                    id="rental"
-                    type="number"
-                    step="0.0001"
-                    value={rentalIncomeUpdate}
-                    onChange={(e) => setRentalIncomeUpdate(e.target.value)}
-                    placeholder="New rental income"
-                  />
-                  <Button 
-                    onClick={handleUpdateRentalIncome}
-                    disabled={rentalLoading || !rentalIncomeUpdate}
-                  >
-                    {rentalLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : "Update"}
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-500">
-                  Current: {property.monthlyRentalIncome} XFI
-                </p>
-              </div>
-
-              {/* Oracle Valuation Request */}
-              <div className="border-t pt-4">
-                <Label className="flex items-center mb-3">
-                  <Zap className="h-4 w-4 mr-2 text-yellow-500" />
-                  Oracle Valuation Request
-                </Label>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="oracleLocation">Location</Label>
-                    <Input
-                      id="oracleLocation"
-                      value={oracleParams.location}
-                      onChange={(e) => setOracleParams({...oracleParams, location: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="oracleSize">Size (sq ft)</Label>
-                    <Input
-                      id="oracleSize"
-                      value={oracleParams.size}
-                      onChange={(e) => setOracleParams({...oracleParams, size: e.target.value})}
-                    />
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Settings className="h-5 w-5 text-gray-600" />
+                  <div>
+                    <p className="font-medium">Auto-Update Valuation</p>
+                    <p className="text-sm text-gray-500">
+                      {autoUpdateEnabled 
+                        ? 'Automatically update property valuation every 24 hours using Chainlink Automation'
+                        : 'Enable to automatically update property valuation using Chainlink Automation'
+                      }
+                    </p>
                   </div>
                 </div>
-                <Button 
-                  onClick={handleOracleValuationRequest}
-                  disabled={oracleLoading || !oracleParams.location}
-                  variant="outline"
-                  className="w-full"
-                >
-                  {oracleLoading ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Zap className="h-4 w-4 mr-2" />
+                <Switch
+                  checked={autoUpdateEnabled}
+                  onCheckedChange={handleToggleAutomation}
+                  disabled={automationLoading}
+                />
+              </div>
+              
+              {autoUpdateEnabled && (
+                <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 rounded-r">
+                  <p className="text-sm text-blue-800">
+                    <strong>Automation Active:</strong> This property will be automatically updated 
+                    when the conditions are met (24-hour interval and significant market changes).
+                  </p>
+                  {needsUpdate && (
+                    <p className="text-sm text-orange-800 mt-1">
+                      <strong>Status:</strong> Property is eligible for automatic update.
+                    </p>
                   )}
-                  Request Oracle Valuation
-                </Button>
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -379,7 +320,7 @@ const PropertyManagement = () => {
             <CardTitle>Current Property Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="text-center p-3 bg-gray-50 rounded">
                 <p className="text-sm text-gray-500">Total Shares</p>
                 <p className="text-lg font-semibold">{property.totalShares}</p>
@@ -393,10 +334,6 @@ const PropertyManagement = () => {
                 <Badge variant={property.isActive ? "default" : "secondary"}>
                   {property.isActive ? "Active" : "Inactive"}
                 </Badge>
-              </div>
-              <div className="text-center p-3 bg-gray-50 rounded">
-                <p className="text-sm text-gray-500">Created</p>
-                <p className="text-sm font-medium">{property.creationTimestamp}</p>
               </div>
             </div>
           </CardContent>

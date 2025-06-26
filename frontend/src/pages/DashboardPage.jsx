@@ -5,6 +5,7 @@ import InvestmentPortfolio from "../components/Dashboard/InvestmentPortfolio"
 import { PropertyGrid } from "../components/properties/PropertyGrid"
 import { PropertyDetails } from "../components/properties/PropertyDetails"
 import PropertyTokenization from "../components/properties/PropertyTokenization"
+import PropertyManagement from "../components/Dashboard/PropertyManagement"
 import  RentalIncome  from "../components/Dashboard/RentalIncome"
 import PropertyTokenPurchase from "../components/Dashboard/PropertyTokenPurchase"
 import { KYCStatus } from "../components/KYC/KYCStatus"
@@ -26,9 +27,11 @@ function DashboardPage() {
               <Route path="/properties" element={<PropertyGrid />} />
               <Route path="/properties/:id" element={<PropertyDetails />} />
               <Route path="/tokenization" element={<PropertyTokenization />} />
+              <Route path="/management" element={<PropertyManagement />} />
               <Route path="/marketplace" element={<PropertyTokenPurchase />} />
               <Route path="/rental" element={<RentalIncome />} />
               <Route path="/nfts" element={<NFTViewer />} />
+
 
               <Route
                 path="/kyc"

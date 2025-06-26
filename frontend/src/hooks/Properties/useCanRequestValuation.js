@@ -9,22 +9,26 @@ const useCanRequestValuation = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { address, isConnected } = useAppKitAccount();
-  const contractAddress = import.meta.env.VITE_APP_REAL_ESTATE_ORACLE_ADDRESS;
-  const { contract } = useContract(contractAddress, OracleABI);
+  
+  const oracleAddress = import.meta.env.VITE_APP_REAL_ESTATE_ORACLE_ADDRESS;
+  
+  const { contract: oracleContract } = useContract(oracleAddress, OracleABI);
 
-  const checkCanRequestValuation = useCallback(
-    async (propertyId) => {
+  const canRequestValuation = useCallback(
+    async () => {
       if (!address || !isConnected) {
         return {
           canRequest: false,
-          reason: "Please connect your wallet"
+          reason: "Please connect your wallet",
+          isOwner: false
         };
       }
 
-      if (!contract) {
+      if (!oracleContract) {
         return {
           canRequest: false,
-          reason: "Oracle contract is not available"
+          reason: "Contracts are not available",
+          isOwner: false
         };
       }
 
@@ -32,59 +36,33 @@ const useCanRequestValuation = () => {
       setError(null);
 
       try {
-        const canRequest = await contract.canUserRequestValuation(address, propertyId);
+        // Check if user is the contract owner (admin)
+        const contractOwner = await oracleContract.owner();
+        const isOwner = contractOwner.toLowerCase() === address.toLowerCase();
         
-        if (canRequest) {
-          return {
-            canRequest: true,
-            reason: null
-          };
-        } else {
-          // Check what the specific issue is
-          try {
-            // Try to get the last request time
-            const lastRequestTime = await contract.lastRequestTime(propertyId);
-            const currentTime = Math.floor(Date.now() / 1000);
-            const cooldownPeriod = 3600; // 1 hour in seconds
-            const timeUntilNextRequest = lastRequestTime + cooldownPeriod - currentTime;
-            
-            if (timeUntilNextRequest > 0) {
-              const hours = Math.floor(timeUntilNextRequest / 3600);
-              const minutes = Math.floor((timeUntilNextRequest % 3600) / 60);
-              return {
-                canRequest: false,
-                reason: `Please wait ${hours > 0 ? hours + 'h ' : ''}${minutes}m before requesting another valuation update`,
-                timeUntilNextRequest
-              };
-            } else {
-              return {
-                canRequest: false,
-                reason: "You must own tokens of this property to request valuation updates"
-              };
-            }
-                     } catch {
-             return {
-               canRequest: false,
-               reason: "You must own tokens of this property to request valuation updates"
-             };
-           }
-        }
+        return {
+          canRequest: isOwner,
+          reason: isOwner ? "" : "Only admin can request valuation updates",
+          isOwner
+        };
       } catch (err) {
-        console.error("Error checking valuation request permission:", err);
-        const errorMessage = err.message || "Error checking permissions";
+        console.error("Error checking valuation request permissions:", err);
+        const errorMessage = err.reason || err.message || "Failed to check permissions";
         setError(errorMessage);
+        
         return {
           canRequest: false,
-          reason: errorMessage
+          reason: errorMessage,
+          isOwner: false
         };
       } finally {
         setLoading(false);
       }
     },
-    [address, isConnected, contract]
+    [address, isConnected, oracleContract]
   );
 
-  return { checkCanRequestValuation, loading, error };
+  return { canRequestValuation, loading, error };
 };
 
 export default useCanRequestValuation; 

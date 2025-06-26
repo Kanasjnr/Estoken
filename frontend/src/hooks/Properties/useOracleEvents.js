@@ -59,6 +59,12 @@ const useOracleEvents = () => {
 
       setEvents(parsedEvents.reverse()); // Most recent first
     } catch (err) {
+      // Suppress filter not found errors as they're common with RPC provider filter cleanup
+      if (err.message?.includes('filter not found') || err.code === 'UNKNOWN_ERROR') {
+        console.log('Filter expired or not found, this is normal. Retrying...');
+        // Don't set error state for this common issue
+        return;
+      }
       console.error("Error fetching oracle events:", err);
       setError(err.message);
     } finally {
@@ -105,20 +111,32 @@ const useOracleEvents = () => {
       setEvents(prev => [newEvent, ...prev]);
     };
 
+    // Error handler for all events
+    const handleError = (error) => {
+      // Suppress filter not found errors as they're common with RPC provider filter cleanup
+      if (error.message?.includes('filter not found') || error.code === 'UNKNOWN_ERROR') {
+        console.log('Filter expired or not found, this is normal for oracle events.');
+        return;
+      }
+      console.error('Error in oracle event listener:', error);
+    };
+
     try {
       // Set up event listeners
       contract.on('PropertyValuationRequested', handlePropertyValuationRequested);
       contract.on('PropertyValuationUpdated', handlePropertyValuationUpdated);
       contract.on('RequestFailed', handleRequestFailed);
+      contract.on('error', handleError);
 
       // Cleanup function
       return () => {
         contract.off('PropertyValuationRequested', handlePropertyValuationRequested);
         contract.off('PropertyValuationUpdated', handlePropertyValuationUpdated);
         contract.off('RequestFailed', handleRequestFailed);
+        contract.off('error', handleError);
       };
     } catch (error) {
-      console.error('Error setting up event listeners:', error);
+      console.error('Error setting up oracle event listeners:', error);
       return () => {};
     }
   }, [contract]);

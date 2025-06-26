@@ -167,7 +167,7 @@ const PropertyManagement = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="pricePerShare">Price Per Share (XFI)</Label>
+                <Label htmlFor="pricePerShare">Price Per Share (ETH)</Label>
                 <Input
                   id="pricePerShare"
                   type="number"
@@ -207,7 +207,7 @@ const PropertyManagement = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="valuation">Update Valuation (XFI)</Label>
+                <Label htmlFor="valuation">Update Valuation (ETH)</Label>
                 <div className="flex space-x-2">
                   <Input
                     id="valuation"
@@ -225,12 +225,12 @@ const PropertyManagement = () => {
                   </Button>
                 </div>
                 <p className="text-sm text-gray-500">
-                  Current: {property.currentValuation} XFI
+                  Current: {property.currentValuation} ETH
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="rental">Update Monthly Rental Income (XFI)</Label>
+                <Label htmlFor="rental">Update Monthly Rental Income (ETH)</Label>
                 <div className="flex space-x-2">
                   <Input
                     id="rental"
@@ -248,7 +248,7 @@ const PropertyManagement = () => {
                   </Button>
                 </div>
                 <p className="text-sm text-gray-500">
-                  Current: {property.monthlyRentalIncome} XFI
+                  Current: {property.monthlyRentalIncome} ETH
                 </p>
               </div>
             </CardContent>

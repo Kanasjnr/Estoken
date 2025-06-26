@@ -10,6 +10,51 @@ import { Badge } from "@/components/ui/badge"
 import { Zap, TrendingUp, AlertCircle, Clock } from "lucide-react"
 import { ethers } from "ethers"
 
+// Component to display individual property with oracle support
+const PropertyCardWithOracle = ({ prop, selectedProperty, onSelect }) => {
+  const { getSimulatedValuation } = usePropertyWithOracle(prop.id);
+  const simulatedValuation = getSimulatedValuation();
+
+  // Use simulated valuation if available, otherwise use property valuation
+  const displayCurrentValuation = simulatedValuation ? 
+    simulatedValuation.newValuation : 
+    prop.currentValuation;
+
+  return (
+    <Card
+      className={`cursor-pointer transition-all duration-300 ${selectedProperty === prop.id ? "ring-2 ring-primary" : ""}`}
+      onClick={() => onSelect(prop.id)}
+      aria-label={`Select property ${prop.name}`}
+    >
+      <CardHeader>
+        <CardTitle>{prop.name}</CardTitle>
+        <CardDescription>{prop.location}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <img
+          src={prop.imageUrls[0] || "/placeholder.svg?height=200&width=300"}
+          alt={prop.name}
+          className="w-full h-48 object-cover rounded-md mb-4"
+        />
+        <p className="text-sm text-gray-600 mb-2">{prop.description}</p>
+        <div className="space-y-1">
+          <p className="font-semibold">Price per token: {prop.pricePerShare} ETH</p>
+          <p>Available tokens: {prop.availableShares}</p>
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-sm text-gray-500">Current Valuation:</span>
+            <span className="text-sm font-medium">
+              {displayCurrentValuation} ETH
+              {simulatedValuation && (
+                <span className="text-xs text-green-600 ml-1">(Updated)</span>
+              )}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 const PropertyTokenPurchase = () => {
   const [selectedProperty, setSelectedProperty] = useState(null)
   const [purchaseAmount, setPurchaseAmount] = useState("")
@@ -112,33 +157,12 @@ const PropertyTokenPurchase = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {localProperties.map((prop) => (
-          <Card
+          <PropertyCardWithOracle
             key={prop.id}
-            className={`cursor-pointer transition-all duration-300 ${selectedProperty === prop.id ? "ring-2 ring-primary" : ""}`}
-            onClick={() => handlePropertySelect(prop.id)}
-            aria-label={`Select property ${prop.name}`}
-          >
-            <CardHeader>
-              <CardTitle>{prop.name}</CardTitle>
-              <CardDescription>{prop.location}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <img
-                src={prop.imageUrls[0] || "/placeholder.svg?height=200&width=300"}
-                alt={prop.name}
-                className="w-full h-48 object-cover rounded-md mb-4"
-              />
-              <p className="text-sm text-gray-600 mb-2">{prop.description}</p>
-              <div className="space-y-1">
-                <p className="font-semibold">Price per token: {prop.pricePerShare} ETH</p>
-                <p>Available tokens: {prop.availableShares}</p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-sm text-gray-500">Current Valuation:</span>
-                  <span className="text-sm font-medium">{prop.currentValuation} ETH</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            prop={prop}
+            selectedProperty={selectedProperty}
+            onSelect={handlePropertySelect}
+          />
         ))}
       </div>
 
