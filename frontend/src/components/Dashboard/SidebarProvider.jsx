@@ -1,16 +1,23 @@
-import  { createContext, useState, useContext } from 'react'
+import { createContext, useState, useContext } from 'react'
+import PropTypes from 'prop-types'
 
 const SidebarContext = createContext()
 
-export const useSidebar = () => useContext(SidebarContext)
+export const useSidebarContext = () => useContext(SidebarContext)
 
 export function SidebarProvider({ children }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
+  const toggle = () => setIsCollapsed(!isCollapsed)
 
   return (
-    <SidebarContext.Provider value={{ isSidebarOpen, setIsSidebarOpen }}>
+    <SidebarContext.Provider value={{ isCollapsed, toggle }}>
       {children}
     </SidebarContext.Provider>
   )
+}
+
+SidebarProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 }
 

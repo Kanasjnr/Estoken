@@ -30,5 +30,9 @@ export { default as useOracleEvents } from "./useOracleEvents";
 export { default as useOracleAdmin } from "./useOracleAdmin";
 export { default as usePropertyWithOracle } from "./usePropertyWithOracle";
 
+// Automation Hooks
+export { default as usePropertyAutomation } from "./usePropertyAutomation";
+export { default as useAutomationEvents } from "./useAutomationEvents";
+
 // Notifications
 export { default as useNotifications } from "./useNotifications"; 

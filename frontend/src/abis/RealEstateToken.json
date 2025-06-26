@@ -5,6 +5,11 @@
         "internalType": "address",
         "name": "_kycManager",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_priceFeed",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -645,6 +650,25 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "propertyPriceUSD",
+        "type": "uint256"
+      }
+    ],
+    "name": "calculateETHRequired",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "propertyId",
         "type": "uint256"
       },
@@ -742,6 +766,19 @@
         "internalType": "uint256[]",
         "name": "shares",
         "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getLatestETHPrice",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
       }
     ],
     "stateMutability": "view",
@@ -878,6 +915,25 @@
         "internalType": "struct RealEstateToken.PropertyInfo",
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "propertyId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPropertyPriceInETH",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1139,6 +1195,19 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_priceFeed",
+        "type": "address"
+      }
+    ],
+    "name": "updatePriceFeed",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "propertyId",
         "type": "uint256"
@@ -1188,6 +1257,24 @@
       }
     ],
     "name": "updatePropertyValuation",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "propertyId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newRentalIncome",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateRentalIncome",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

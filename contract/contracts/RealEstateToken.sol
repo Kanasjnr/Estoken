@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import "./KYCManager.sol";
 
 contract RealEstateToken is ERC1155, Ownable {
@@ -12,6 +13,9 @@ contract RealEstateToken is ERC1155, Ownable {
     uint256 public constant PLATFORM_FEE_PERCENTAGE = 2;
     uint256 private _nextPropertyId = 1;
     uint256 private _tokenIds;
+
+    // Chainlink Data Feed for ETH/USD price
+    AggregatorV3Interface internal priceFeed;
 
     struct PropertyInfo {
         string name;
@@ -96,9 +100,11 @@ contract RealEstateToken is ERC1155, Ownable {
     );
 
     constructor(
-        address _kycManager
+        address _kycManager,
+        address _priceFeed
     ) ERC1155("https://api.example.com/token/{id}.json") Ownable(msg.sender) {
         kycManager = _kycManager;
+        priceFeed = AggregatorV3Interface(_priceFeed);
     }
 
     function isUserVerified(address user) public view returns (bool) {
@@ -170,8 +176,12 @@ contract RealEstateToken is ERC1155, Ownable {
         string memory description,
         uint256 pricePerShare,
         bool isActive
-    ) public onlyOwner {
+    ) public {
         require(_propertyExists(propertyId), "Property does not exist");
+        require(
+            balanceOf(msg.sender, propertyId) > 0 || owner() == msg.sender,
+            "Only property token holders or contract owner can update property"
+        );
 
         PropertyInfo storage propertyInfo = _propertyInfo[propertyId];
         PropertyFinancials storage propertyFinancials = _propertyFinancials[
@@ -326,15 +336,24 @@ contract RealEstateToken is ERC1155, Ownable {
     function updatePropertyValuation(
         uint256 propertyId,
         uint256 newValuation
-    ) public onlyOwner {
+    ) public {
+        require(_propertyExists(propertyId), "Property does not exist");
+        require(
+            balanceOf(msg.sender, propertyId) > 0 || owner() == msg.sender,
+            "Only property token holders or contract owner can update valuation"
+        );
         _propertyInfo[propertyId].currentValuation = newValuation;
     }
 
     function updateRentalIncome(
         uint256 propertyId,
         uint256 newRentalIncome
-    ) public onlyOwner {
+    ) public {
         require(_propertyExists(propertyId), "Property does not exist");
+        require(
+            balanceOf(msg.sender, propertyId) > 0 || owner() == msg.sender,
+            "Only property token holders or contract owner can update rental income"
+        );
         _propertyInfo[propertyId].monthlyRentalIncome = newRentalIncome;
     }
 
@@ -390,8 +409,12 @@ contract RealEstateToken is ERC1155, Ownable {
         }
     }
 
-    function declareDividends(uint256 propertyId) public payable onlyOwner {
+    function declareDividends(uint256 propertyId) public payable {
         require(_propertyExists(propertyId), "Property does not exist");
+        require(
+            balanceOf(msg.sender, propertyId) > 0 || owner() == msg.sender,
+            "Only property token holders or contract owner can declare dividends"
+        );
         require(msg.value > 0, "Must send dividends");
         uint256 totalShares = _propertyInfo[propertyId].totalShares;
         _accumulatedDividendsPerShare[propertyId] +=
@@ -422,5 +445,51 @@ contract RealEstateToken is ERC1155, Ownable {
         return
             ((_accumulatedDividendsPerShare[propertyId] -
                 _lastDividendsClaimed[propertyId][account]) * shares) / 1e18;
+    }
+
+    /**
+     * @notice Get the latest ETH/USD price from Chainlink Data Feed
+     * @return price The latest ETH price in USD (scaled by 1e8)
+     */
+    function getLatestETHPrice() public view returns (int256) {
+        (, int256 price, , , ) = priceFeed.latestRoundData();
+        return price;
+    }
+
+    /**
+     * @notice Calculate required ETH amount for a USD property price
+     * @param propertyPriceUSD Property price in USD (scaled by 1e18)
+     * @return ethRequired Amount of ETH required (scaled by 1e18)
+     */
+    function calculateETHRequired(uint256 propertyPriceUSD) public view returns (uint256) {
+        int256 ethPriceUSD = getLatestETHPrice(); // Price in USD scaled by 1e8
+        require(ethPriceUSD > 0, "Invalid ETH price");
+        
+        // Convert: propertyPriceUSD (1e18) / ethPriceUSD (1e8) = result in 1e10
+        // Then scale to 1e18: result * 1e8 = 1e18
+        uint256 ethRequired = (propertyPriceUSD * 1e8) / uint256(ethPriceUSD);
+        return ethRequired;
+    }
+
+    /**
+     * @notice Get property price in ETH using current market rates
+     * @param propertyId The property ID
+     * @return ethPrice Property price in ETH
+     */
+    function getPropertyPriceInETH(uint256 propertyId) public view returns (uint256) {
+        require(_propertyExists(propertyId), "Property does not exist");
+        PropertyInfo memory property = _propertyInfo[propertyId];
+        
+        // Assuming property values are stored in USD scaled by 1e18
+        uint256 propertyValueUSD = property.currentValuation;
+        return calculateETHRequired(propertyValueUSD);
+    }
+
+    /**
+     * @notice Update the price feed address (only owner)
+     * @param _priceFeed New price feed address
+     */
+    function updatePriceFeed(address _priceFeed) external onlyOwner {
+        priceFeed = AggregatorV3Interface(_priceFeed);
     }
 }
