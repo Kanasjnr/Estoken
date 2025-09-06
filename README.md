@@ -2,7 +2,7 @@
 
 <!-- ![Estoken Logo](https://placeholder.com/path-to-your-logo.png) -->
 
-Estoken is a comprehensive blockchain-based real estate investment platform that democratizes property ownership through fractional tokenization. Built on Base Sepolia, Estoken transforms traditional real estate investment by enabling anyone to own, trade, and earn from property assets through NFT-backed fractional shares.
+Estoken is a comprehensive blockchain-based real estate investment platform that democratizes property ownership through fractional tokenization. Estoken transforms traditional real estate investment by enabling anyone to own, trade, and earn from property assets through NFT-backed fractional shares.
 
 ## 🏢 What is Estoken?
 
@@ -99,7 +99,6 @@ Estoken is a decentralized application (dApp) that bridges the gap between tradi
 ### Blockchain & Smart Contracts
 - **Solidity**: Smart contract development
 - **Hardhat**: Development framework and testing environment
-- **Base Sepolia**: Ethereum Layer 2 testnet for development and testing
 - **Chainlink Functions**: Serverless platform for fetching real estate data from RentCast API
 - **Chainlink Automation**: Automated property management and valuation updates
 
